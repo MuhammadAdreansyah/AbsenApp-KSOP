@@ -1,65 +1,80 @@
-import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+    <div className="relative min-h-screen overflow-hidden px-4 py-10 sm:px-6 lg:px-8">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute left-[-120px] top-[-80px] h-72 w-72 rounded-full bg-blue-400/20 blur-3xl" />
+        <div className="absolute bottom-[-120px] right-[-100px] h-80 w-80 rounded-full bg-cyan-300/25 blur-3xl" />
+      </div>
+
+      <main className="relative mx-auto flex min-h-[calc(100vh-5rem)] max-w-6xl items-center">
+        <section className="grid w-full grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
+          <div className="space-y-7">
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-xs font-semibold text-blue-700">
+              SISTEM ABSENSI TERINTEGRASI
+            </div>
+
+            <div className="space-y-4">
+              <h1 className="text-4xl font-bold leading-tight text-slate-900 sm:text-5xl">
+                Absensi Digital
+                <br />
+                yang Cepat, Jelas, dan Andal
+              </h1>
+              <p className="max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg">
+                Solusi kehadiran rapat dengan verifikasi tanda tangan digital,
+                rekap otomatis, dan output laporan PDF siap arsip.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border border-blue-100 bg-white/90 p-4 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Verifikasi</p>
+                <p className="mt-1 text-sm text-slate-700">Tanda tangan digital langsung di perangkat</p>
+              </div>
+              <div className="rounded-2xl border border-emerald-100 bg-white/90 p-4 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Laporan</p>
+                <p className="mt-1 text-sm text-slate-700">Export PDF harian siap cetak dan distribusi</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Link href="/dashboard" className="block sm:flex-1">
+                <Button className="w-full">Masuk ke Dashboard</Button>
+              </Link>
+              <button className="h-11 rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:flex-1">
+                Tentang Sistem
+              </button>
+            </div>
+          </div>
+
+          <aside className="rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-[0_20px_50px_rgba(15,23,42,0.08)] sm:p-8">
+            <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Ringkasan Fitur</p>
+            <div className="mt-5 space-y-4">
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-sm font-semibold text-slate-900">Input Kehadiran Real-time</p>
+                <p className="mt-1 text-sm text-slate-600">Data peserta tercatat langsung setelah form disubmit.</p>
+              </div>
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-sm font-semibold text-slate-900">Rekap Harian Otomatis</p>
+                <p className="mt-1 text-sm text-slate-600">Daftar peserta dan status verifikasi selalu terbarui.</p>
+              </div>
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-sm font-semibold text-slate-900">Arsip PDF</p>
+                <p className="mt-1 text-sm text-slate-600">Laporan dapat dibuat dan diunduh untuk kebutuhan administrasi.</p>
+              </div>
+            </div>
+            <p className="mt-6 text-xs text-slate-500">
+              Didukung Next.js, Prisma, dan PostgreSQL untuk performa stabil.
+            </p>
+          </aside>
+        </section>
       </main>
+
+      <footer className="relative mx-auto mt-6 max-w-6xl border-t border-slate-200 pt-4 text-xs text-slate-500">
+        <p>© 2026 Sistem Informasi Institusi</p>
+      </footer>
     </div>
   );
 }

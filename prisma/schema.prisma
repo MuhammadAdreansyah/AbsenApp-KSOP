@@ -1,0 +1,98 @@
+// Digital Attendance System Schema
+// Framework: Next.js + Prisma + PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// MODEL: AttendanceRecord
+// Represents individual attendance entry
+// ============================================
+model AttendanceRecord {
+  id              String    @id @default(cuid())
+  nama            String    @db.VarChar(255)
+  nip             String?   @db.VarChar(50)
+  agenda          String    @db.Text
+  meetingCode     String    @default("default") @db.VarChar(120)
+  signatureUrl    String    @db.Text
+  
+  // Foreign Key to DailyLog
+  dailyLogId      String
+  dailyLog        DailyLog  @relation(fields: [dailyLogId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([dailyLogId])
+  @@index([meetingCode])
+  @@index([dailyLogId, meetingCode])
+  @@index([createdAt])
+}
+
+// ============================================
+// MODEL: DailyLog
+// Groups all attendance records for a single day
+// ============================================
+model DailyLog {
+  id              String    @id @default(cuid())
+  date            DateTime  @db.Date @unique
+  status          DailyStatus @default(ACTIVE)
+  pdfUrl          String?   @db.Text
+  
+  // Relations
+  attendanceRecords AttendanceRecord[]
+  monthlyArchiveId  String?
+  monthlyArchive    MonthlyArchive? @relation(fields: [monthlyArchiveId], references: [id], onDelete: SetNull)
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([date])
+  @@index([status])
+  @@index([monthlyArchiveId])
+}
+
+// ============================================
+// MODEL: MonthlyArchive
+// Aggregates daily logs from a complete month
+// ============================================
+model MonthlyArchive {
+  id              String    @id @default(cuid())
+  month           Int       @db.SmallInt // 1-12
+  year            Int       @db.SmallInt // e.g., 2026
+  status          ArchiveStatus @default(ACTIVE)
+  zipUrl          String?   @db.Text
+  pdfUrl          String?   @db.Text
+  
+  // Relations
+  dailyLogs       DailyLog[]
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Composite unique constraint (one archive per month-year)
+  @@unique([month, year])
+  @@index([status])
+}
+
+// ============================================
+// ENUMS
+// ============================================
+enum DailyStatus {
+  ACTIVE      // Attendance currently being recorded
+  FROZEN      // Day has ended, PDF generated
+}
+
+enum ArchiveStatus {
+  ACTIVE      // Current/recent archive
+  ARCHIVED    // Old archive (read-only)
+}

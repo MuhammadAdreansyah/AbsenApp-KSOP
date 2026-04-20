@@ -20,27 +20,6 @@ npm run prisma:push
 npm run prisma:studio
 ```
 
-## Script Otomatis Tambahan (Baru)
-
-Perintah ini dibuat untuk operasional lokal yang lebih praktis:
-
-```bash
-# Isi data contoh harian jika masih kosong
-npm run db:seed
-
-# Backup database lokal ke folder backups/
-npm run db:backup
-
-# Restore dari backup terbaru (atau file tertentu)
-npm run db:restore
-```
-
-Contoh restore dari file spesifik:
-
-```bash
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/db-restore.ps1 -InputFile "backups/absenapp-20260417-120000.dump"
-```
-
 ## Alur Normal Setelah Ubah Schema
 
 Jika Anda mengubah `prisma/schema.prisma`, jalankan:
@@ -213,15 +192,6 @@ npm run prisma:studio
 
 # Jalankan migration (development)
 npm run prisma:migrate
-
-# Isi data contoh
-npm run db:seed
-
-# Backup database lokal
-npm run db:backup
-
-# Restore database lokal
-npm run db:restore
 
 # Reset total DB dev
 npx prisma migrate reset
