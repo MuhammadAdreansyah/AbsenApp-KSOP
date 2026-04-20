@@ -3,6 +3,26 @@
 Dokumentasi ini fokus ke perintah Prisma untuk pengelolaan database harian.
 Tujuannya agar saat ada kendala teknis Anda bisa langsung jalankan perintah yang tepat.
 
+## Setup Supabase untuk Production
+
+Jika aplikasi akan dipindah penuh ke Supabase, gunakan checklist ini:
+
+1. Buat project Supabase.
+2. Buat bucket Storage bernama `daily-pdfs` dan set bucket menjadi Public.
+3. Ambil PostgreSQL connection string (Transaction Pooler lebih aman untuk serverless/Vercel).
+4. Isi Environment Variables di Vercel dengan acuan file `.env.example`.
+5. Jalankan migration ke database Supabase:
+
+```bash
+npx prisma migrate deploy
+```
+
+6. Redeploy aplikasi di Vercel.
+
+Catatan:
+- PDF harian akan otomatis diunggah ke Supabase Storage bila `NEXT_PUBLIC_SUPABASE_URL` dan `SUPABASE_SERVICE_ROLE_KEY` tersedia.
+- Jika env Supabase belum ada (misalnya saat local quick test), generator akan fallback ke penyimpanan lokal `public/pdfs/daily`.
+
 ## Prasyarat
 
 1. Pastikan file `.env` / `.env.local` sudah berisi `DATABASE_URL` yang benar.

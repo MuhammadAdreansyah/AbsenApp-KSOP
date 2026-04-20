@@ -1,9 +1,10 @@
 // src/lib/pdf/generator.ts
 // PDF Generation Utility untuk Daily Recap
 
-import { renderToFile } from "@react-pdf/renderer";
+import { renderToBuffer, renderToFile } from "@react-pdf/renderer";
 import DailyRecapPDF from "./templates";
 import { prisma } from "@/lib/prisma";
+import { getSupabaseAdminClient, getSupabasePdfBucketName } from "@/lib/supabase-server";
 import path from "path";
 import { promises as fs } from "fs";
 import { pathToFileURL } from "url";
@@ -149,18 +150,7 @@ export async function generateDailyRecapPDF(
       />
     );
 
-    // 3. Setup output directory
-    const pdfDir =
-      outputDir || path.join(process.cwd(), "public", "pdfs", "daily");
-
-    // Create directory if not exists
-    try {
-      await fs.mkdir(pdfDir, { recursive: true });
-    } catch (err) {
-      console.warn("Directory creation warning:", err);
-    }
-
-    // 4. Generate filename
+    // 3. Generate filename
     const utcYear = recapDate.getUTCFullYear();
     const utcMonth = String(recapDate.getUTCMonth() + 1).padStart(2, "0");
     const utcDay = String(recapDate.getUTCDate()).padStart(2, "0");
@@ -172,22 +162,61 @@ export async function generateDailyRecapPDF(
       .replace(/^-|-$/g, "")
       .slice(0, 60) || "default";
     const fileName = `absensi-harian-${dateStr}-${safeMeetingCode}.pdf`;
-    const filePath = path.join(pdfDir, fileName);
+    const storagePath = `daily/${utcYear}/${utcMonth}/${fileName}`;
 
-    // 5. Render and save PDF
-    await renderToFile(pdfDocument, filePath);
+    const supabaseClient = getSupabaseAdminClient();
+    const bucketName = getSupabasePdfBucketName();
+    let resolvedPdfUrl = "";
+
+    // 4. Upload to Supabase Storage if configured
+    if (supabaseClient) {
+      const pdfBuffer = await renderToBuffer(pdfDocument);
+      const uploadResult = await supabaseClient.storage
+        .from(bucketName)
+        .upload(storagePath, Buffer.from(pdfBuffer), {
+          contentType: "application/pdf",
+          cacheControl: "3600",
+          upsert: true,
+        });
+
+      if (uploadResult.error) {
+        return {
+          success: false,
+          message: "Gagal upload PDF ke Supabase Storage",
+          error: uploadResult.error.message,
+        };
+      }
+
+      const publicUrlResult = supabaseClient.storage
+        .from(bucketName)
+        .getPublicUrl(storagePath);
+
+      resolvedPdfUrl = publicUrlResult.data.publicUrl;
+    } else {
+      // 5. Fallback local storage for development when Supabase env is missing
+      const pdfDir = outputDir || path.join(process.cwd(), "public", "pdfs", "daily");
+      const filePath = path.join(pdfDir, fileName);
+
+      try {
+        await fs.mkdir(pdfDir, { recursive: true });
+      } catch (err) {
+        console.warn("Directory creation warning:", err);
+      }
+
+      await renderToFile(pdfDocument, filePath);
+      resolvedPdfUrl = `/pdfs/daily/${fileName}`;
+    }
 
     // 6. Save pdfUrl to DailyLog
-    const pdfUrl = `/pdfs/daily/${fileName}`;
     await prisma.dailyLog.update({
       where: { id: dailyLog.id },
-      data: { pdfUrl },
+      data: { pdfUrl: resolvedPdfUrl },
     });
 
     return {
       success: true,
       message: "PDF berhasil dihasilkan",
-      filePath: pdfUrl,
+      filePath: resolvedPdfUrl,
     };
   } catch (error) {
     console.error("Error generating PDF:", error);
