@@ -308,11 +308,11 @@ export function DailyAttendanceView({ meetingCode = "default" }: DailyAttendance
               <Button
                 onClick={handleDownloadPDF}
                 disabled={isGeneratingPDF}
-                className="flex-1"
+                className="w-full flex-1 min-h-12 h-auto px-4 py-3 text-sm leading-tight sm:text-base"
               >
                 {isGeneratingPDF ? (
                   <>
-                    <span className="mr-2 inline-block animate-spin">...</span>
+                    <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                     Menyiapkan PDF terbaru...
                   </>
                 ) : (
@@ -321,7 +321,10 @@ export function DailyAttendanceView({ meetingCode = "default" }: DailyAttendance
               </Button>
 
               {dailyLog.status === "ACTIVE" && (
-                <Button variant="outline" className="flex-1 font-semibold">
+                <Button
+                  variant="outline"
+                  className="w-full flex-1 min-h-12 h-auto px-4 py-3 text-sm leading-tight font-semibold sm:text-base"
+                >
                   Selesaikan Rapat
                 </Button>
               )}
