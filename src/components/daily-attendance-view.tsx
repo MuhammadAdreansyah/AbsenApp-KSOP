@@ -64,7 +64,7 @@ export function DailyAttendanceView({ meetingCode = "default" }: DailyAttendance
     return (await response.json()) as GeneratePdfResponse;
   };
 
-  // Fetch today's attendance
+  // Fetch today's attendance dengan polling real-time setiap 3 detik
   useEffect(() => {
     let isMounted = true;
 
@@ -75,11 +75,13 @@ export function DailyAttendanceView({ meetingCode = "default" }: DailyAttendance
         }
         setError(null);
         
-        const result = await getTodayAttendance(meetingCode);
+        // Gunakan API endpoint ringan untuk real-time polling
+        const response = await fetch(`/api/attendance/stats?meetingCode=${encodeURIComponent(meetingCode)}`);
+        const json = await response.json();
         
         if (isMounted) {
-          if (result.success && result.data) {
-            setDailyLog(result.data as DailyLog);
+          if (json.success && json.data) {
+            setDailyLog(json.data as DailyLog);
           } else {
             setDailyLog(null);
           }
@@ -105,17 +107,17 @@ export function DailyAttendanceView({ meetingCode = "default" }: DailyAttendance
 
     window.addEventListener("attendance:updated", handleAttendanceUpdated);
 
-    // Refresh setiap 30 detik
+    // Polling real-time setiap 3 detik untuk instant update seperti WhatsApp
     const interval = setInterval(() => {
       void fetchData(false);
-    }, 30000);
+    }, 3000);
     
     return () => {
       isMounted = false;
       window.removeEventListener("attendance:updated", handleAttendanceUpdated);
       clearInterval(interval);
     };
-  }, []);
+  }, [meetingCode]);
 
   const handleDownloadPDF = () => {
     if (!dailyLog) return;
