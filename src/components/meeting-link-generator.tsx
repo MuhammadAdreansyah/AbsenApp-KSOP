@@ -69,86 +69,101 @@ export function MeetingLinkGenerator({ currentMeetingCode }: MeetingLinkGenerato
   };
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Generator Link Rapat</p>
-          <h2 className="mt-1 text-lg font-bold text-slate-900">Pisahkan Absensi Antar Agenda</h2>
-          <p className="mt-1 text-xs text-slate-600">
-            Setiap kode rapat menghasilkan data absensi dan PDF yang berbeda walau di hari yang sama.
-          </p>
-        </div>
-        <div className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">
-          Aktif: {currentMeetingCode}
-        </div>
-      </div>
-
-      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-          <p className="text-xs font-semibold text-slate-500">Link rapat aktif</p>
-          <Input
-            className="mt-2 bg-white text-xs sm:text-sm"
-            value={currentLink}
-            readOnly
-          />
-          <Button
-            type="button"
-            variant="outline"
-            className="mt-3 w-full"
-            onClick={() => handleCopy(currentLink, "Link rapat aktif berhasil disalin")}
-          >
-            Salin Link Aktif
-          </Button>
-        </div>
-
-        <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-xs font-semibold text-slate-500">Buat link rapat baru</p>
-            <span className="rounded-full border border-amber-400 bg-amber-100 px-2.5 py-1 text-[11px] font-bold tracking-wide text-amber-900">
-              Gunakan ini jika ada agenda rapat terbaru
+    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <details className="group" aria-label="Generator Link Rapat">
+        <summary className="flex cursor-pointer list-none flex-wrap items-start justify-between gap-3 p-5">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Generator Link Rapat</p>
+            <h2 className="mt-1 text-lg font-bold text-slate-900">Pisahkan Absensi Antar Agenda</h2>
+            <p className="mt-1 text-xs text-slate-600">
+              Buka panel ini hanya saat perlu membuat link untuk agenda rapat baru.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">
+              Aktif: {currentMeetingCode}
+            </div>
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-transform group-open:rotate-180">
+              ▾
             </span>
           </div>
-          <Input
-            className="mt-2 bg-white"
-            placeholder="Contoh: Rapat Evaluasi Triwulan"
-            value={meetingInput}
-            onChange={(event) => setMeetingInput(event.target.value)}
-          />
-          <p className="mt-2 text-xs text-slate-600">
-            Kode hasil: <span className="font-semibold text-slate-800">{nextMeetingCode || "-"}</span>
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setMeetingInput(buildAutoMeetingCode())}
-            >
-              Generate Otomatis
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              disabled={!nextLink}
-              onClick={() => {
-                if (!nextLink) return;
-                window.open(nextLink, "_blank", "noopener,noreferrer");
-              }}
-            >
-              Buka di Tab Baru
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={!nextLink}
-              onClick={() => handleCopy(nextLink, "Link rapat baru berhasil disalin")}
-            >
-              Salin Link Baru
-            </Button>
+        </summary>
+
+        <div className="border-t border-slate-200 px-5 pb-5 pt-4">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2">
+            <p className="text-xs font-semibold text-amber-900">
+              Panel ini opsional. Gunakan jika ada agenda rapat baru yang butuh link terpisah.
+            </p>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+              <p className="text-xs font-semibold text-slate-500">Link rapat aktif</p>
+              <Input
+                className="mt-2 bg-white text-xs sm:text-sm"
+                value={currentLink}
+                readOnly
+              />
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-3 w-full min-h-11"
+                onClick={() => handleCopy(currentLink, "Link rapat aktif berhasil disalin")}
+              >
+                Salin Link Aktif
+              </Button>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-xs font-semibold text-slate-500">Buat link rapat baru</p>
+                <span className="rounded-full border border-amber-400 bg-amber-100 px-2.5 py-1 text-[11px] font-bold tracking-wide text-amber-900">
+                  Gunakan ini jika ada agenda rapat terbaru
+                </span>
+              </div>
+              <Input
+                className="mt-2 bg-white"
+                placeholder="Contoh: Rapat Evaluasi Triwulan"
+                value={meetingInput}
+                onChange={(event) => setMeetingInput(event.target.value)}
+              />
+              <p className="mt-2 text-xs text-slate-600">
+                Kode hasil: <span className="font-semibold text-slate-800">{nextMeetingCode || "-"}</span>
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setMeetingInput(buildAutoMeetingCode())}
+                >
+                  Generate Otomatis
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={!nextLink}
+                  onClick={() => {
+                    if (!nextLink) return;
+                    window.open(nextLink, "_blank", "noopener,noreferrer");
+                  }}
+                >
+                  Buka di Tab Baru
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={!nextLink}
+                  onClick={() => handleCopy(nextLink, "Link rapat baru berhasil disalin")}
+                >
+                  Salin Link Baru
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </details>
     </section>
   );
 }

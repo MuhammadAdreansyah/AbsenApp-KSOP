@@ -93,23 +93,26 @@ export function AttendanceForm({ meetingCode = "default" }: AttendanceFormProps)
   };
 
   return (
-    <Card className="overflow-hidden border-slate-200 bg-white shadow-[0_12px_35px_rgba(15,23,42,0.08)]">
+    <Card className="overflow-hidden border-slate-200 bg-white shadow-[0_12px_35px_rgba(15,23,42,0.08)] h-full flex flex-col">
       <CardHeader className="rounded-t-2xl border-b border-slate-200 bg-white">
         <CardTitle className="text-2xl flex items-center gap-2 text-slate-900">
           Form Absensi Rapat
         </CardTitle>
+        <p className="mt-1 text-sm text-slate-600">
+          Isi data peserta, tambahkan tanda tangan, lalu simpan absensi.
+        </p>
       </CardHeader>
 
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <CardContent className="space-y-5 pt-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col">
+        <CardContent className="space-y-5 pt-6 flex-1">
           {/* Header Info */}
           <div className="mb-4 rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-blue-800">Petunjuk Pengisian</p>
-            <p className="mt-2 text-xs text-blue-900/85">
-              Harap isi semua field yang ditandai dengan (*) merah. Tanda tangan digital wajib diisi untuk verifikasi.
+            <p className="mt-2 text-sm text-blue-900/90">
+              Anda sedang mengisi absensi untuk agenda: <span className="font-semibold">{meetingCode}</span>. Isi nama dan topik rapat, lalu tandatangani sebelum menekan tombol simpan.
             </p>
             <p className="mt-2 text-xs font-semibold text-blue-700">
-              Kode rapat aktif: {meetingCode}
+              Field bertanda <span className="text-red-500">*</span> wajib diisi.
             </p>
           </div>
 
@@ -193,14 +196,14 @@ export function AttendanceForm({ meetingCode = "default" }: AttendanceFormProps)
               clearForm();
             }}
             disabled={isLoading}
-            className="flex-1"
+            className="w-full min-h-12 sm:w-auto sm:flex-1"
           >
             Reset Form
           </Button>
           <Button
             type="submit"
             disabled={isLoading || !signatureValue}
-            className="flex-1"
+            className="w-full min-h-12 sm:flex-[1.2]"
             aria-busy={isLoading}
           >
             {isLoading ? (

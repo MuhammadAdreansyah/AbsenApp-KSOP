@@ -25,9 +25,11 @@ body {
   color: var(--foreground);
   font-family: var(--font-jakarta-sans), sans-serif;
   background-image:
-    radial-gradient(circle at 15% -10%, rgba(21, 93, 252, 0.15), transparent 40%),
-    radial-gradient(circle at 95% 0%, rgba(14, 165, 233, 0.14), transparent 35%),
-    linear-gradient(180deg, #f8fbff 0%, #f5f7fb 35%, #eef3ff 100%);
+    radial-gradient(1100px 520px at 8% -8%, rgba(21, 93, 252, 0.18), transparent 64%),
+    radial-gradient(900px 460px at 96% -6%, rgba(14, 165, 233, 0.16), transparent 60%),
+    radial-gradient(1200px 520px at 50% 120%, rgba(99, 102, 241, 0.08), transparent 68%),
+    linear-gradient(180deg, #fbfdff 0%, #f7faff 22%, #f3f8ff 44%, #eef5ff 66%, #e9f2ff 84%, #e5efff 100%);
+  background-attachment: fixed;
   min-height: 100vh;
 }
 

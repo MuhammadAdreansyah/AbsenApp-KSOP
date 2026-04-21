@@ -69,78 +69,40 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Tujuan</p>
-            <p className="mt-1 text-base font-semibold text-slate-900">Absensi Rapat</p>
-            <p className="mt-1 text-xs text-slate-600">Pencatatan peserta rapat resmi</p>
+          <div className="group rounded-2xl border border-slate-200 bg-gradient-to-br from-blue-50/60 to-white p-5 shadow-sm transition hover:shadow-md hover:border-blue-300">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-blue-600">Tujuan</p>
+            <p className="mt-2 text-lg font-bold text-slate-900">Absensi Rapat</p>
+            <p className="mt-2 text-sm text-slate-600 leading-relaxed">Pencatatan peserta rapat resmi</p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Lembaga</p>
-            <p className="mt-1 text-base font-semibold text-slate-900">KSOP Utama</p>
-            <p className="mt-1 text-xs text-slate-600">Direktorat Jenderal Perhubungan Laut</p>
+          <div className="group rounded-2xl border border-slate-200 bg-gradient-to-br from-emerald-50/60 to-white p-5 shadow-sm transition hover:shadow-md hover:border-emerald-300">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-600">Lembaga</p>
+            <p className="mt-2 text-lg font-bold text-slate-900">KSOP Utama</p>
+            <p className="mt-2 text-sm text-slate-600 leading-relaxed">Direktorat Jenderal Perhubungan Laut</p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Metode</p>
-            <p className="mt-1 text-base font-semibold text-slate-900">Tanda Tangan Digital</p>
-            <p className="mt-1 text-xs text-slate-600">Verifikasi elektronik terintegrasi</p>
+          <div className="group rounded-2xl border border-slate-200 bg-gradient-to-br from-purple-50/60 to-white p-5 shadow-sm transition hover:shadow-md hover:border-purple-300">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-purple-600">Metode</p>
+            <p className="mt-2 text-lg font-bold text-slate-900">Tanda Tangan Digital</p>
+            <p className="mt-2 text-sm text-slate-600 leading-relaxed">Verifikasi elektronik terintegrasi</p>
+          </div>
+        </div>
+
+        <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3 auto-rows-max lg:auto-rows-fr">
+          <div className="lg:col-span-1 flex flex-col">
+            <AttendanceForm meetingCode={meetingCode} />
+          </div>
+
+          <div className="lg:col-span-2 flex flex-col">
+            <DailyAttendanceView meetingCode={meetingCode} />
           </div>
         </div>
 
         <div className="mt-6">
           <MeetingLinkGenerator currentMeetingCode={meetingCode} />
         </div>
-
-        <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
-          <div className="lg:col-span-1">
-            <AttendanceForm meetingCode={meetingCode} />
-          </div>
-
-          <div className="lg:col-span-2">
-            <DailyAttendanceView meetingCode={meetingCode} />
-          </div>
-        </div>
       </main>
 
-      <footer className="mt-12 border-t border-slate-200 bg-white/80">
+      <footer className="mt-12 bg-gradient-to-b from-transparent via-slate-50/40 to-slate-100/60">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-4">
-            <div>
-              <h3 className="mb-3 text-sm font-bold text-slate-900">Fitur Keamanan</h3>
-              <ul className="space-y-2 text-xs text-slate-600">
-                <li>Data Terenkripsi</li>
-                <li>Backup Otomatis</li>
-                <li>Verifikasi Digital</li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="mb-3 text-sm font-bold text-slate-900">Kemampuan Sistem</h3>
-              <ul className="space-y-2 text-xs text-slate-600">
-                <li>Input Real-time</li>
-                <li>Rekap PDF Harian</li>
-                <li>Tanda Tangan Digital</li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="mb-3 text-sm font-bold text-slate-900">Organisasi</h3>
-              <ul className="space-y-2 text-xs text-slate-600">
-                <li>Dir. Jen. Perhubungan Laut</li>
-                <li>KSOP Utama Belawan</li>
-                <li>Sumatera Utara</li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="mb-3 text-sm font-bold text-slate-900">Informasi</h3>
-              <ul className="space-y-2 text-xs text-slate-600">
-                <li>Versi 1.0</li>
-                <li>Tahun 2026</li>
-                <li>Kementerian Perhubungan</li>
-              </ul>
-            </div>
-          </div>
-
           <div className="border-t border-slate-200 pt-6">
             <p className="text-center text-xs text-slate-600">
               © 2026 Sistem Absensi Rapat - Direktorat Jenderal Perhubungan Laut

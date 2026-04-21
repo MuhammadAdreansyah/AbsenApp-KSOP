@@ -150,11 +150,11 @@ export function DailyAttendanceView({ meetingCode = "default" }: DailyAttendance
 
   if (isLoading) {
     return (
-      <Card className="overflow-hidden border-slate-200 bg-white shadow-[0_12px_35px_rgba(15,23,42,0.08)]">
+      <Card className="overflow-hidden border-slate-200 bg-white shadow-[0_12px_35px_rgba(15,23,42,0.08)] h-full flex flex-col">
         <CardHeader className="rounded-t-2xl border-b border-slate-200 bg-white">
           <CardTitle className="text-2xl text-slate-900">Rekap Peserta Rapat</CardTitle>
         </CardHeader>
-        <CardContent className="pt-8">
+        <CardContent className="pt-8 flex-1 flex items-center justify-center">
           <div className="flex flex-col items-center justify-center p-12">
             <div className="mb-4 inline-block h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
             <p className="text-sm font-medium text-gray-600">Memuat data absensi...</p>
@@ -166,11 +166,11 @@ export function DailyAttendanceView({ meetingCode = "default" }: DailyAttendance
 
   if (error) {
     return (
-      <Card className="overflow-hidden border-red-200 bg-white shadow-[0_12px_35px_rgba(15,23,42,0.08)]">
+      <Card className="overflow-hidden border-red-200 bg-white shadow-[0_12px_35px_rgba(15,23,42,0.08)] h-full flex flex-col">
         <CardHeader className="rounded-t-2xl border-b border-slate-200 bg-white">
           <CardTitle className="text-2xl text-slate-900">Rekap Peserta Rapat</CardTitle>
         </CardHeader>
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 flex-1">
           <p className="mb-4 text-sm text-red-700">{error}</p>
           <Button 
             onClick={() => window.location.reload()}
@@ -185,7 +185,7 @@ export function DailyAttendanceView({ meetingCode = "default" }: DailyAttendance
   }
 
   return (
-    <Card className="overflow-hidden border-slate-200 bg-white shadow-[0_12px_35px_rgba(15,23,42,0.08)]">
+    <Card className="overflow-hidden border-slate-200 bg-white shadow-[0_12px_35px_rgba(15,23,42,0.08)] h-full flex flex-col">
       <CardHeader className="rounded-t-2xl border-b border-slate-200 bg-white">
         <div className="flex items-center justify-between">
           <div>
@@ -206,9 +206,9 @@ export function DailyAttendanceView({ meetingCode = "default" }: DailyAttendance
         </div>
       </CardHeader>
 
-      <CardContent className="pt-6">
+      <CardContent className="pt-6 flex-1 flex flex-col">
         {dailyLog && dailyLog.attendanceRecords.length > 0 ? (
-          <div className="space-y-6">
+          <div className="flex flex-col gap-6 h-full">
             {/* Info Box */}
             <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-blue-800">Informasi Peserta</p>
@@ -252,12 +252,12 @@ export function DailyAttendanceView({ meetingCode = "default" }: DailyAttendance
             </div>
 
             {/* Attendance List */}
-            <div>
+            <div className="flex flex-col flex-1 min-h-0">
               <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-gray-900">
                 <span className="rounded-lg bg-slate-800 px-3 py-1 text-xs font-bold text-white">DAFTAR</span>
                 Peserta Hadir ({dailyLog.attendanceRecords.length})
               </h3>
-              <div className="max-h-96 space-y-2 overflow-y-auto pr-2">
+              <div className="max-h-[32rem] space-y-2 overflow-y-auto pr-2">
                 {dailyLog.attendanceRecords.map((record, idx) => (
                   <div
                     key={record.id}
@@ -304,7 +304,7 @@ export function DailyAttendanceView({ meetingCode = "default" }: DailyAttendance
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col gap-3 border-t border-slate-200 pt-6 sm:flex-row">
+            <div className="flex flex-col gap-3 border-t border-slate-200 pt-6 mt-2 sm:flex-row">
               <Button
                 onClick={handleDownloadPDF}
                 disabled={isGeneratingPDF}
@@ -319,26 +319,19 @@ export function DailyAttendanceView({ meetingCode = "default" }: DailyAttendance
                   <>Download Laporan PDF Agenda Ini</>
                 )}
               </Button>
-
-              {dailyLog.status === "ACTIVE" && (
-                <Button
-                  variant="outline"
-                  className="w-full flex-1 min-h-12 h-auto px-4 py-3 text-sm leading-tight font-semibold sm:text-base"
-                >
-                  Selesaikan Rapat
-                </Button>
-              )}
             </div>
           </div>
         ) : (
-          <div className="text-center py-16">
-            <div className="mb-6 text-6xl">📝</div>
-            <p className="mb-3 text-lg font-bold text-gray-700">
-              Belum Ada Data Peserta
-            </p>
-            <p className="mb-6 text-sm text-gray-600">
-              Silakan mulai dengan mengisi form absensi di sebelah kiri untuk mencatat kehadiran peserta
-            </p>
+          <div className="flex flex-1 items-center justify-center">
+            <div className="text-center py-8">
+              <div className="mb-6 text-6xl">📝</div>
+              <p className="mb-3 text-lg font-bold text-gray-700">
+                Belum Ada Data Peserta
+              </p>
+              <p className="mb-6 text-sm text-gray-600 max-w-xs">
+                Silakan mulai dengan mengisi form absensi di sebelah kiri untuk mencatat kehadiran peserta
+              </p>
+            </div>
           </div>
         )}
       </CardContent>
