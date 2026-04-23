@@ -1,5 +1,6 @@
 // src/lib/pdf/templates.tsx
 // PDF Document Templates menggunakan @react-pdf/renderer
+// Desain profesional dengan logo dan layout rapi
 
 import React from "react";
 import {
@@ -13,128 +14,187 @@ import {
 
 const styles = StyleSheet.create({
   page: {
-    paddingTop: 26,
+    paddingTop: 20,
     paddingHorizontal: 28,
     paddingBottom: 24,
     fontFamily: "Helvetica",
-    fontSize: 9,
-    color: "#111827",
-    lineHeight: 1.35,
+    fontSize: 10,
+    color: "#0f172a",
+    lineHeight: 1.4,
+    backgroundColor: "#ffffff",
   },
 
+  // ===== LETTERHEAD / KOP SURAT =====
   letterheadWrap: {
-    borderBottomWidth: 2,
-    borderBottomColor: "#111827",
-    paddingBottom: 8,
-    marginBottom: 10,
+    borderBottomWidth: 3,
+    borderBottomColor: "#0f172a",
+    paddingBottom: 12,
+    marginBottom: 12,
   },
 
   letterheadRow: {
     flexDirection: "row",
     alignItems: "center",
-  },
-
-  letterheadImage: {
-    width: 58,
-    height: 58,
-    marginRight: 10,
-  },
-
-  letterheadCenter: {
-    flex: 1,
-    alignItems: "center",
+    gap: 12,
     justifyContent: "center",
   },
 
-  govLine1: {
+  logoContainer: {
+    width: 64,
+    height: 64,
+    justifyContent: "center",
+    alignItems: "center",
+    flexShrink: 0,
+  },
+
+  logo: {
+    width: 60,
+    height: 60,
+  },
+
+  letterheadContent: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 2,
+  },
+
+  // Level 1: PEMERINTAH REPUBLIK INDONESIA
+  govLevel1: {
+    fontSize: 8,
+    fontWeight: "bold",
+    letterSpacing: 0.7,
+    color: "#0f172a",
+    marginBottom: 2,
+  },
+
+  // Level 2 & 3: KEMENTERIAN + DIREKTORAT
+  govLevel23: {
     fontSize: 10,
     fontWeight: "bold",
-    letterSpacing: 0.4,
+    color: "#0f172a",
+    marginBottom: 1.5,
   },
 
-  govLine2: {
-    fontSize: 13,
+  // Level 4: KANTOR KESYAHBANDARAN (Prominent)
+  govLevel4: {
+    fontSize: 10.5,
     fontWeight: "bold",
+    color: "#0f172a",
     marginTop: 1,
+    marginBottom: 2,
   },
 
-  govLine3: {
-    fontSize: 11,
-    fontWeight: "bold",
-    marginTop: 1,
-  },
-
-  govAddress: {
+  // Level 5: Address (Normal)
+  govLevel5: {
+    fontSize: 7.5,
+    color: "#1e293b",
     textAlign: "center",
-    fontSize: 8,
-    marginTop: 2,
+    lineHeight: 1.35,
+    marginBottom: 1.5,
   },
 
-  docTitleWrap: {
-    marginTop: 4,
-    marginBottom: 10,
+  // Level 6: Contact (Normal)
+  govLevel6: {
+    fontSize: 7,
+    color: "#1e293b",
+    textAlign: "center",
+    lineHeight: 1.3,
+  },
+
+  // ===== DOCUMENT TITLE =====
+  titleSection: {
+    marginTop: 10,
+    marginBottom: 14,
     alignItems: "center",
   },
 
-  title: {
-    textAlign: "center",
-    fontSize: 13,
+  documentTitle: {
+    fontSize: 15,
     fontWeight: "bold",
-    textDecoration: "underline",
     textTransform: "uppercase",
+    textDecoration: "underline",
+    color: "#000000",
+    letterSpacing: 0.4,
   },
 
-  subtitle: {
-    textAlign: "center",
+  documentNumber: {
     fontSize: 9,
-    marginTop: 2,
+    marginTop: 3,
+    color: "#374151",
   },
 
-  infoWrap: {
-    marginBottom: 10,
+  // ===== INFO SECTION =====
+  infoSection: {
+    marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#111827",
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+    borderColor: "#cbd5e1",
+    backgroundColor: "#f8fafc",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
   },
 
   infoRow: {
     flexDirection: "row",
-    marginBottom: 2,
+    marginBottom: 4,
+    alignItems: "flex-start",
   },
 
   infoLabel: {
-    width: 88,
+    width: 115,
+    fontWeight: "bold",
+    color: "#1e293b",
+    fontSize: 9,
   },
 
   infoColon: {
-    width: 8,
+    width: 10,
+    textAlign: "center",
+    color: "#1e293b",
   },
 
   infoValue: {
     flex: 1,
+    color: "#0f172a",
+    fontSize: 9,
+  },
+
+  infoRowLast: {
+    marginBottom: 0,
+  },
+
+  // ===== TABLE STYLES =====
+  tableWrapper: {
+    marginBottom: 10,
+  },
+
+  tableTitle: {
+    fontSize: 10.5,
+    fontWeight: "bold",
+    marginBottom: 6,
+    color: "#0f172a",
   },
 
   table: {
     width: "100%",
     borderWidth: 1,
-    borderColor: "#111827",
+    borderColor: "#0f172a",
+    borderStyle: "solid",
   },
 
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: "#e5e7eb",
-    borderBottomWidth: 1,
-    borderBottomColor: "#111827",
-    minHeight: 26,
-    alignItems: "center",
+    backgroundColor: "#1e293b",
+    color: "#ffffff",
+    borderBottomWidth: 1.5,
+    borderBottomColor: "#0f172a",
+    minHeight: 30,
   },
 
   tableRow: {
     flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: "#9ca3af",
-    minHeight: 36,
+    borderBottomWidth: 0.8,
+    borderBottomColor: "#cbd5e1",
+    minHeight: 42,
     alignItems: "stretch",
   },
 
@@ -142,89 +202,113 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0,
   },
 
+  tableRowAlternate: {
+    backgroundColor: "#f1f5f9",
+  },
+
   tableCellBase: {
-    borderRightWidth: 1,
-    borderRightColor: "#9ca3af",
-    paddingHorizontal: 4,
-    paddingVertical: 4,
+    borderRightWidth: 0.8,
+    borderRightColor: "#cbd5e1",
+    paddingHorizontal: 6,
+    paddingVertical: 6,
     justifyContent: "center",
+    fontSize: 9,
+  },
+
+  tableCellHeader: {
+    fontWeight: "bold",
+    color: "#ffffff",
+    textAlign: "center",
+    fontSize: 8.5,
   },
 
   tableCellLast: {
     borderRightWidth: 0,
   },
 
-  headerText: {
-    fontSize: 8,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-
-  bodyText: {
-    fontSize: 9,
-  },
-
-  centered: {
-    textAlign: "center",
-  },
-
+  // Column widths
   colNo: {
-    width: "7%",
-    alignItems: "center",
+    width: "6%",
+    textAlign: "center",
   },
 
   colNama: {
-    width: "29%",
+    width: "28%",
   },
 
   colNip: {
-    width: "17%",
+    width: "18%",
   },
 
   colAgenda: {
-    width: "27%",
+    width: "24%",
   },
 
   colSignature: {
-    width: "20%",
+    width: "24%",
+    textAlign: "center",
     alignItems: "center",
   },
 
+  // ===== SIGNATURE & CONTENT =====
   signatureImage: {
-    width: 58,
-    height: 24,
+    width: 50,
+    height: 20,
     objectFit: "contain",
   },
 
   emptySignature: {
     fontSize: 8,
-    color: "#6b7280",
-    textAlign: "center",
+    color: "#94a3b8",
   },
 
-  recapWrap: {
-    marginTop: 8,
+  bodyText: {
+    color: "#0f172a",
+    fontSize: 9,
+  },
+
+  // ===== NOTES SECTION =====
+  notesSection: {
+    marginTop: 10,
+    marginBottom: 8,
     borderWidth: 1,
-    borderColor: "#111827",
+    borderColor: "#cbd5e1",
+    backgroundColor: "#fffbeb",
     paddingHorizontal: 8,
     paddingVertical: 6,
   },
 
-  recapText: {
-    fontSize: 8,
+  notesTitle: {
+    fontSize: 8.5,
+    fontWeight: "bold",
+    marginBottom: 3,
+    color: "#0f172a",
   },
 
+  notesText: {
+    fontSize: 8,
+    color: "#1e293b",
+    lineHeight: 1.4,
+  },
+
+  // ===== FOOTER =====
   footer: {
     marginTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: "#9ca3af",
-    paddingTop: 4,
+    paddingTop: 6,
+    borderTopWidth: 0.8,
+    borderTopColor: "#cbd5e1",
     textAlign: "right",
   },
 
   footerText: {
     fontSize: 7,
-    color: "#4b5563",
+    color: "#475569",
+  },
+
+  footerNote: {
+    fontSize: 6.5,
+    color: "#64748b",
+    marginTop: 1.5,
   },
 });
 
@@ -251,8 +335,8 @@ export function DailyRecapPDF({
   letterheadImageUrl,
   date,
   records,
-  institutionName = "KEMENTERIAN PERHUBUNGAN REPUBLIK INDONESIA",
-  documentTitle = "Daftar Hadir Rapat",
+  institutionName = "DIREKTORAT JENDERAL PERHUBUNGAN LAUT",
+  documentTitle = "DAFTAR HADIR PESERTA RAPAT",
   meetingPlace = "Ruang Rapat Kantor",
   meetingTitle,
 }: DailyRecapPDFProps) {
@@ -268,125 +352,157 @@ export function DailyRecapPDF({
 
   const generatedAt = new Date().toLocaleString("id-ID");
   const resolvedMeetingTitle = meetingTitle || records[0]?.agenda || "Rapat Koordinasi";
-  const docNumber = `ABS/${date.getUTCFullYear()}/${String(date.getUTCMonth() + 1).padStart(2, "0")}/${String(
+  const docNumber = `ABS-${date.getUTCFullYear()}/${String(date.getUTCMonth() + 1).padStart(2, "0")}/${String(
     date.getUTCDate()
   ).padStart(2, "0")}`;
+
+  const terverifikasi = records.filter((r) => r.signatureUrl).length;
+  const pending = records.length - terverifikasi;
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
+        {/* ===== LETTERHEAD ===== */}
         <View style={styles.letterheadWrap}>
           <View style={styles.letterheadRow}>
-            {letterheadImageUrl ? (
-              // eslint-disable-next-line jsx-a11y/alt-text
-              <Image style={styles.letterheadImage} src={letterheadImageUrl} />
-            ) : (
-              <View style={styles.letterheadImage} />
-            )}
+            {/* Logo Container */}
+            <View style={styles.logoContainer}>
+              {letterheadImageUrl ? (
+                <Image style={styles.logo} src={letterheadImageUrl} />
+              ) : (
+                <View style={[styles.logo, { backgroundColor: "#e5e7eb" }]} />
+              )}
+            </View>
 
-            <View style={styles.letterheadCenter}>
-              <Text style={styles.govLine1}>PEMERINTAH REPUBLIK INDONESIA</Text>
-              <Text style={styles.govLine2}>{institutionName}</Text>
-              <Text style={styles.govLine3}>KSOP UTAMA BELAWAN</Text>
-              <Text style={styles.govAddress}>
-                Jl. Raya Pelabuhan Belawan, Sumatera Utara | Telp. (061) 000000
+            {/* Organization Info */}
+            <View style={styles.letterheadContent}>
+              <Text style={styles.govLevel1}>PEMERINTAH REPUBLIK INDONESIA</Text>
+              <Text style={styles.govLevel23}>KEMENTERIAN PERHUBUNGAN</Text>
+              <Text style={styles.govLevel4}>KANTOR KESYAHBANDARAN DAN OTORITAS PELABUHAN UTAMA BELAWAN</Text>
+              <Text style={styles.govLevel5}>
+                Jl. Deli No.1
+              </Text>
+              <Text style={styles.govLevel6}>
+                Telepon: (061) 6940018 • Faksimili: (061) 6940018 • Email: kasopbelawan@kemenhub.go.id
               </Text>
             </View>
           </View>
         </View>
 
-        <View style={styles.docTitleWrap}>
-          <Text style={styles.title}>{documentTitle}</Text>
-          <Text style={styles.subtitle}>Nomor: {docNumber}</Text>
+        {/* ===== DOCUMENT TITLE ===== */}
+        <View style={styles.titleSection}>
+          <Text style={styles.documentTitle}>{documentTitle}</Text>
+          <Text style={styles.documentNumber}>Nomor: {docNumber}</Text>
         </View>
 
-        <View style={styles.infoWrap}>
+        {/* ===== MEETING INFO ===== */}
+        <View style={styles.infoSection}>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Hari</Text>
+            <Text style={styles.infoLabel}>Hari / Tanggal</Text>
             <Text style={styles.infoColon}>:</Text>
-            <Text style={styles.infoValue}>{dayName}</Text>
+            <Text style={styles.infoValue}>{dayName}, {dateOnly}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Tanggal</Text>
+            <Text style={styles.infoLabel}>Waktu Pelaksanaan</Text>
             <Text style={styles.infoColon}>:</Text>
-            <Text style={styles.infoValue}>{dateOnly}</Text>
+            <Text style={styles.infoValue}>08:00 WIB - Selesai</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Tempat</Text>
+            <Text style={styles.infoLabel}>Tempat / Ruangan</Text>
             <Text style={styles.infoColon}>:</Text>
             <Text style={styles.infoValue}>{meetingPlace}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Judul Agenda Rapat</Text>
+            <Text style={styles.infoLabel}>Nama Kegiatan / Rapat</Text>
             <Text style={styles.infoColon}>:</Text>
             <Text style={styles.infoValue}>{resolvedMeetingTitle}</Text>
           </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Jumlah Peserta</Text>
+          <View style={[styles.infoRow, styles.infoRowLast]}>
+            <Text style={styles.infoLabel}>Total Peserta</Text>
             <Text style={styles.infoColon}>:</Text>
-            <Text style={styles.infoValue}>{records.length} orang</Text>
+            <Text style={styles.infoValue}>{records.length} Orang ({terverifikasi} Terverifikasi, {pending} Pending)</Text>
           </View>
         </View>
 
-        <View style={styles.table}>
-          <View style={styles.tableHeader}>
-            <View style={[styles.tableCellBase, styles.colNo]}>
-              <Text style={styles.headerText}>No</Text>
-            </View>
-            <View style={[styles.tableCellBase, styles.colNama]}>
-              <Text style={styles.headerText}>Nama Lengkap</Text>
-            </View>
-            <View style={[styles.tableCellBase, styles.colNip]}>
-              <Text style={styles.headerText}>Jabatan / NIP</Text>
-            </View>
-            <View style={[styles.tableCellBase, styles.colAgenda]}>
-              <Text style={styles.headerText}>Agenda / Kegiatan</Text>
-            </View>
-            <View style={[styles.tableCellBase, styles.colSignature, styles.tableCellLast]}>
-              <Text style={styles.headerText}>Paraf / Tanda Tangan</Text>
-            </View>
-          </View>
-
-          {records.map((record, index) => {
-            const isLast = index === records.length - 1;
-
-            return (
-              <View key={record.id} style={[styles.tableRow, isLast ? styles.tableRowLast : {}]}>
-                <View style={[styles.tableCellBase, styles.colNo]}>
-                  <Text style={[styles.bodyText, styles.centered]}>{index + 1}</Text>
-                </View>
-                <View style={[styles.tableCellBase, styles.colNama]}>
-                  <Text style={styles.bodyText}>{record.nama}</Text>
-                </View>
-                <View style={[styles.tableCellBase, styles.colNip]}>
-                  <Text style={styles.bodyText}>{record.nip || "-"}</Text>
-                </View>
-                <View style={[styles.tableCellBase, styles.colAgenda]}>
-                  <Text style={styles.bodyText}>{record.agenda}</Text>
-                </View>
-                <View style={[styles.tableCellBase, styles.colSignature, styles.tableCellLast]}>
-                  {record.signatureUrl ? (
-                    // eslint-disable-next-line jsx-a11y/alt-text
-                    <Image style={styles.signatureImage} src={record.signatureUrl} />
-                  ) : (
-                    <Text style={styles.emptySignature}>-</Text>
-                  )}
-                </View>
+        {/* ===== ATTENDANCE TABLE ===== */}
+        <View style={styles.tableWrapper}>
+          <Text style={styles.tableTitle}>Daftar Peserta Rapat</Text>
+          <View style={styles.table}>
+            {/* Table Header */}
+            <View style={styles.tableHeader}>
+              <View style={[styles.tableCellBase, styles.colNo]}>
+                <Text style={styles.tableCellHeader}>NO</Text>
               </View>
-            );
-          })}
+              <View style={[styles.tableCellBase, styles.colNama]}>
+                <Text style={styles.tableCellHeader}>NAMA LENGKAP</Text>
+              </View>
+              <View style={[styles.tableCellBase, styles.colNip]}>
+                <Text style={styles.tableCellHeader}>JABATAN/NIP</Text>
+              </View>
+              <View style={[styles.tableCellBase, styles.colAgenda]}>
+                <Text style={styles.tableCellHeader}>AGENDA/KEGIATAN</Text>
+              </View>
+              <View style={[styles.tableCellBase, styles.colSignature, styles.tableCellLast]}>
+                <Text style={styles.tableCellHeader}>PARAF/TTD</Text>
+              </View>
+            </View>
+
+            {/* Table Body */}
+            {records.map((record, index) => {
+              const isLast = index === records.length - 1;
+              const isAlternate = index % 2 === 1;
+
+              return (
+                <View
+                  key={record.id}
+                  style={[
+                    styles.tableRow,
+                    ...(isLast ? [styles.tableRowLast] : []),
+                    ...(isAlternate ? [styles.tableRowAlternate] : []),
+                  ]}
+                >
+                  <View style={[styles.tableCellBase, styles.colNo]}>
+                    <Text style={[styles.bodyText, { textAlign: "center" }]}>{index + 1}</Text>
+                  </View>
+                  <View style={[styles.tableCellBase, styles.colNama]}>
+                    <Text style={styles.bodyText}>{record.nama}</Text>
+                  </View>
+                  <View style={[styles.tableCellBase, styles.colNip]}>
+                    <Text style={styles.bodyText}>{record.nip || "-"}</Text>
+                  </View>
+                  <View style={[styles.tableCellBase, styles.colAgenda]}>
+                    <Text style={styles.bodyText}>{record.agenda}</Text>
+                  </View>
+                  <View style={[styles.tableCellBase, styles.colSignature, styles.tableCellLast]}>
+                    {record.signatureUrl && record.signatureUrl.length > 100 ? (
+                      <Image style={styles.signatureImage} src={record.signatureUrl} />
+                    ) : (
+                      <Text style={styles.emptySignature}>-</Text>
+                    )}
+                  </View>
+                </View>
+              );
+            })}
+          </View>
         </View>
 
-        <View style={styles.recapWrap}>
-          <Text style={styles.recapText}>
-            Keterangan: Dokumen ini merupakan daftar hadir resmi rapat internal instansi dan
-            digunakan sebagai arsip administrasi.
+        {/* ===== NOTES ===== */}
+        <View style={styles.notesSection}>
+          <Text style={styles.notesTitle}>KETERANGAN:</Text>
+          <Text style={styles.notesText}>
+            • Dokumen ini adalah salinan resmi daftar hadir rapat yang diselenggarakan oleh KSOP Utama Belawan{"\n"}
+            • Paraf/Tanda tangan digital menunjukkan verifikasi kehadiran peserta rapat{"\n"}
+            • Untuk verifikasi lebih lanjut, hubungi bagian administrasi/tata usaha
           </Text>
         </View>
 
+        {/* ===== FOOTER ===== */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            Generated by Sistem Manajemen Absensi Rapat - {generatedAt}
+            Sistem Manajemen Absensi Rapat Elektronik | Generated: {generatedAt}
+          </Text>
+          <Text style={styles.footerNote}>
+            © 2026 KSOP Utama Belawan | Document ID: {docNumber}
           </Text>
         </View>
       </Page>

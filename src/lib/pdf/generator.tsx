@@ -7,7 +7,6 @@ import { prisma } from "@/lib/prisma";
 import { getSupabaseAdminClient, getSupabasePdfBucketName } from "@/lib/supabase-server";
 import path from "path";
 import { promises as fs } from "fs";
-import { pathToFileURL } from "url";
 
 interface GeneratePDFOptions {
   date?: Date;
@@ -49,32 +48,30 @@ export async function generateDailyRecapPDF(
     const defaultLogoPath = path.join(process.cwd(), "public", "assets", "image", "logo.png");
 
     let resolvedLetterheadImageUrl = letterheadImageUrl;
+    
+    // Helper: Convert file path ke base64 data URL
+    const convertFileToDataUrl = async (filePath: string): Promise<string | undefined> => {
+      try {
+        const fileBuffer = await fs.readFile(filePath);
+        const base64 = fileBuffer.toString("base64");
+        const mimeType = filePath.toLowerCase().endsWith(".png") ? "image/png" : "image/jpeg";
+        return `data:${mimeType};base64,${base64}`;
+      } catch {
+        return undefined;
+      }
+    };
+
+    // Process provided letterheadImageUrl jika ada
     if (resolvedLetterheadImageUrl?.startsWith("/")) {
       const absoluteFromPublic = path.join(process.cwd(), "public", resolvedLetterheadImageUrl);
-      try {
-        await fs.access(absoluteFromPublic);
-        resolvedLetterheadImageUrl = pathToFileURL(absoluteFromPublic).href;
-      } catch {
-        resolvedLetterheadImageUrl = undefined;
-      }
+      resolvedLetterheadImageUrl = await convertFileToDataUrl(absoluteFromPublic);
+    } else if (resolvedLetterheadImageUrl && !/^https?:\/\//i.test(resolvedLetterheadImageUrl) && !resolvedLetterheadImageUrl.startsWith("data:")) {
+      resolvedLetterheadImageUrl = await convertFileToDataUrl(resolvedLetterheadImageUrl);
     }
 
-    if (resolvedLetterheadImageUrl && !/^https?:\/\//i.test(resolvedLetterheadImageUrl) && !resolvedLetterheadImageUrl.startsWith("file://")) {
-      try {
-        await fs.access(resolvedLetterheadImageUrl);
-        resolvedLetterheadImageUrl = pathToFileURL(resolvedLetterheadImageUrl).href;
-      } catch {
-        resolvedLetterheadImageUrl = undefined;
-      }
-    }
-
+    // Gunakan default logo jika belum ada image URL
     if (!resolvedLetterheadImageUrl) {
-      try {
-        await fs.access(defaultLogoPath);
-        resolvedLetterheadImageUrl = pathToFileURL(defaultLogoPath).href;
-      } catch {
-        resolvedLetterheadImageUrl = undefined;
-      }
+      resolvedLetterheadImageUrl = await convertFileToDataUrl(defaultLogoPath);
     }
 
     if (!dailyLogId && !date) {
