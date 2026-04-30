@@ -5,6 +5,8 @@
 
 import { prisma } from "@/lib/prisma";
 import { AttendanceFormSchema } from "@/lib/validations/attendance";
+import { sanitizeInput } from "@/lib/security";
+import { logger } from "@/lib/logger";
 import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
 
@@ -21,6 +23,7 @@ interface AttendanceSubmitResult {
 /**
  * Submit attendance form
  * - Validates input
+ * - Sanitizes fields for XSS protection
  * - Gets or creates today's DailyLog
  * - Saves AttendanceRecord with signature
  */
@@ -32,37 +35,56 @@ export async function submitAttendance(
     // 1. Validate input
     const validatedData = AttendanceFormSchema.parse(formData);
 
-    // 2. Get or create today's DailyLog
+    // 2. Sanitize inputs for XSS protection
+    const sanitizedData = {
+      nama: sanitizeInput(validatedData.nama),
+      nip: validatedData.nip ? sanitizeInput(validatedData.nip) : null,
+      agenda: sanitizeInput(validatedData.agenda),
+      signature: validatedData.signature,
+    };
+
+    // 3. Get or create today's DailyLog
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const dailyLog = await prisma.dailyLog.upsert({
+    // First check if today's DailyLog exists
+    let dailyLog = await prisma.dailyLog.findFirst({
       where: {
         date: today,
       },
-      create: {
-        date: today,
-        status: "ACTIVE",
-      },
-      update: {},
     });
 
-    // 3. Save signature as base64 to a temporary location
+    // Create if it doesn't exist
+    if (!dailyLog) {
+      dailyLog = await prisma.dailyLog.create({
+        data: {
+          date: today,
+          status: "ACTIVE",
+        },
+      });
+    }
+
+    // 4. Save signature as base64 to a temporary location
     // In production, you'd upload to cloud storage (S3, Cloudinary, etc)
     // For now, we'll store it in the database as the signatureUrl
-    const signatureUrl = validatedData.signature;
+    const signatureUrl = sanitizedData.signature;
 
-    // 4. Create AttendanceRecord
+    // 5. Create AttendanceRecord
     const record = await prisma.attendanceRecord.create({
       data: {
-        nama: validatedData.nama,
-        nip: validatedData.nip || null,
-        agenda: validatedData.agenda,
-        meetingCode,
+        nama: sanitizedData.nama,
+        nip: sanitizedData.nip,
+        agenda: sanitizedData.agenda,
+        meetingCode: sanitizeInput(meetingCode),
         signatureUrl: signatureUrl,
         dailyLogId: dailyLog.id,
       },
     });
+
+    logger.info(
+      { recordId: record.id, meetingCode, nama: sanitizedData.nama },
+      "Attendance submitted successfully"
+    );
 
     return {
       success: true,
@@ -76,6 +98,7 @@ export async function submitAttendance(
     // Handle validation errors
     if (error instanceof ZodError) {
       const formErrors = error.flatten().fieldErrors;
+      logger.warn({ errors: formErrors }, "Attendance validation failed");
       return {
         success: false,
         message: "Validasi gagal. Silakan cek kembali data Anda.",
@@ -90,6 +113,7 @@ export async function submitAttendance(
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2000") {
+        logger.warn({ error: error.message }, "Attendance field too long");
         return {
           success: false,
           message: "Data terlalu panjang. Pastikan field Jabatan/NIP tidak lebih dari 50 karakter.",
@@ -97,6 +121,7 @@ export async function submitAttendance(
       }
 
       if (error.code === "P2021") {
+        logger.error({ error: error.message }, "Database schema not ready");
         return {
           success: false,
           message: "Struktur database belum siap (tabel absensi belum ada). Jalankan `npm run prisma:push` lalu coba simpan kembali.",
@@ -105,6 +130,7 @@ export async function submitAttendance(
     }
 
     if (error instanceof Prisma.PrismaClientInitializationError) {
+      logger.error({ error: error.message }, "Database connection error");
       return {
         success: false,
         message: "Koneksi database bermasalah. Jalankan ulang server aplikasi lalu coba simpan kembali.",
@@ -112,7 +138,7 @@ export async function submitAttendance(
     }
 
     // Handle database errors
-    console.error("Error submitting attendance:", error);
+    logger.error({ error }, "Error submitting attendance");
     return {
       success: false,
       message: "Terjadi kesalahan saat menyimpan data. Silakan coba lagi.",
@@ -128,7 +154,7 @@ export async function getTodayAttendance(meetingCode = "default") {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const dailyLog = await prisma.dailyLog.findUnique({
+    const dailyLog = await prisma.dailyLog.findFirst({
       where: {
         date: today,
       },
@@ -169,7 +195,7 @@ export async function getTodayAttendance(meetingCode = "default") {
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("Error fetching today's attendance:", errorMessage);
+    logger.error({ error: errorMessage }, "Error fetching today's attendance");
     
     // Return success: true with null data to avoid "Failed to fetch" errors
     // Component will show "Belum ada peserta" message

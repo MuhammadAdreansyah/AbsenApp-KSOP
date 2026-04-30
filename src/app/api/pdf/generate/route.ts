@@ -3,9 +3,15 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { generateDailyRecapPDF } from "@/lib/pdf/generator";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
+import { sanitizeInput } from "@/lib/security";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+// Rate limit: 20 PDF generations per minute per IP
+const RATE_LIMIT_PDF = 20;
 
 function parseLocalDateInput(value: string): Date | null {
   const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -40,11 +46,29 @@ function parseLocalDateInput(value: string): Date | null {
  * }
  */
 export async function POST(request: NextRequest) {
+  const clientIp = getClientIp(request);
+
   try {
+    // Check rate limit
+    const rateLimitResult = await checkRateLimit(clientIp, "pdf-generate", RATE_LIMIT_PDF);
+    if (!rateLimitResult.allowed) {
+      logger.warn({ ip: clientIp, endpoint: "pdf-generate" }, "Rate limit exceeded");
+      return NextResponse.json(
+        { success: false, message: "Terlalu banyak permintaan. Silakan coba lagi dalam beberapa saat." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": "60",
+          },
+        }
+      );
+    }
+
     const body = await request.json();
     const { date, dailyLogId, meetingCode, letterheadImageUrl, institutionName, meetingPlace, meetingTitle } = body;
 
     if (!dailyLogId && !date) {
+      logger.warn({ ip: clientIp }, "PDF generation: missing required parameters");
       return NextResponse.json(
         { success: false, message: "dailyLogId atau date wajib diisi" },
         { status: 400 }
@@ -56,15 +80,16 @@ export async function POST(request: NextRequest) {
     if (dailyLogId) {
       result = await generateDailyRecapPDF({
         dailyLogId,
-        meetingCode,
-        letterheadImageUrl,
-        institutionName,
-        meetingPlace,
-        meetingTitle,
+        meetingCode: meetingCode ? sanitizeInput(meetingCode) : undefined,
+        letterheadImageUrl: letterheadImageUrl ? sanitizeInput(letterheadImageUrl) : undefined,
+        institutionName: institutionName ? sanitizeInput(institutionName) : undefined,
+        meetingPlace: meetingPlace ? sanitizeInput(meetingPlace) : undefined,
+        meetingTitle: meetingTitle ? sanitizeInput(meetingTitle) : undefined,
       });
     } else {
       const parsedDate = parseLocalDateInput(date);
       if (!parsedDate) {
+        logger.warn({ ip: clientIp, date }, "Invalid date format");
         return NextResponse.json(
           { success: false, message: "Format date tidak valid (gunakan ISO format)" },
           { status: 400 }
@@ -73,27 +98,29 @@ export async function POST(request: NextRequest) {
 
       result = await generateDailyRecapPDF({
         date: parsedDate,
-        meetingCode,
-        letterheadImageUrl,
-        institutionName,
-        meetingPlace,
-        meetingTitle,
+        meetingCode: meetingCode ? sanitizeInput(meetingCode) : undefined,
+        letterheadImageUrl: letterheadImageUrl ? sanitizeInput(letterheadImageUrl) : undefined,
+        institutionName: institutionName ? sanitizeInput(institutionName) : undefined,
+        meetingPlace: meetingPlace ? sanitizeInput(meetingPlace) : undefined,
+        meetingTitle: meetingTitle ? sanitizeInput(meetingTitle) : undefined,
       });
     }
 
     if (!result.success) {
+      logger.warn({ ip: clientIp, result }, "PDF generation failed");
       return NextResponse.json(result, { status: 400 });
     }
 
+    logger.info({ ip: clientIp, dailyLogId }, "PDF generated successfully");
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("Error in PDF generate API:", error);
+    logger.error({ error, ip: clientIp }, "Error in PDF generate API");
     return NextResponse.json(
       {
         success: false,
         message: "Terjadi kesalahan saat menghasilkan PDF",
-        error: message,
+        error: process.env.NODE_ENV === "development" ? message : undefined,
       },
       { status: 500 }
     );
@@ -105,7 +132,24 @@ export async function POST(request: NextRequest) {
  * Get PDF URL untuk date tertentu atau generate jika belum ada
  */
 export async function GET(request: NextRequest) {
+  const clientIp = getClientIp(request);
+
   try {
+    // Check rate limit
+    const rateLimitResult = await checkRateLimit(clientIp, "pdf-generate", RATE_LIMIT_PDF);
+    if (!rateLimitResult.allowed) {
+      logger.warn({ ip: clientIp }, "Rate limit exceeded on PDF GET");
+      return NextResponse.json(
+        { success: false, message: "Terlalu banyak permintaan. Silakan coba lagi dalam beberapa saat." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": "60",
+          },
+        }
+      );
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const dateParam = searchParams.get("date");
     const letterheadImageUrl = searchParams.get("letterheadImageUrl");
@@ -115,6 +159,7 @@ export async function GET(request: NextRequest) {
     const meetingCode = searchParams.get("meetingCode");
 
     if (!dateParam) {
+      logger.warn({ ip: clientIp }, "PDF GET: missing date parameter");
       return NextResponse.json(
         { success: false, message: "Date parameter diperlukan" },
         { status: 400 }
@@ -123,6 +168,7 @@ export async function GET(request: NextRequest) {
 
     const date = parseLocalDateInput(dateParam);
     if (!date) {
+      logger.warn({ ip: clientIp, dateParam }, "Invalid date format in GET");
       return NextResponse.json(
         { success: false, message: "Format date tidak valid" },
         { status: 400 }
@@ -132,20 +178,22 @@ export async function GET(request: NextRequest) {
     // Generate PDF
     const result = await generateDailyRecapPDF({
       date,
-      meetingCode: meetingCode || undefined,
-      letterheadImageUrl: letterheadImageUrl || undefined,
-      institutionName: institutionName || undefined,
-      meetingPlace: meetingPlace || undefined,
-      meetingTitle: meetingTitle || undefined,
+      meetingCode: meetingCode ? sanitizeInput(meetingCode) : undefined,
+      letterheadImageUrl: letterheadImageUrl ? sanitizeInput(letterheadImageUrl) : undefined,
+      institutionName: institutionName ? sanitizeInput(institutionName) : undefined,
+      meetingPlace: meetingPlace ? sanitizeInput(meetingPlace) : undefined,
+      meetingTitle: meetingTitle ? sanitizeInput(meetingTitle) : undefined,
     });
 
     if (!result.success) {
+      logger.warn({ ip: clientIp, result }, "PDF GET generation failed");
       return NextResponse.json(result, { status: 400 });
     }
 
+    logger.info({ ip: clientIp, date: dateParam }, "PDF generated via GET");
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
-    console.error("Error in PDF generate API (GET):", error);
+    logger.error({ error, ip: clientIp }, "Error in PDF generate API (GET)");
     return NextResponse.json(
       {
         success: false,

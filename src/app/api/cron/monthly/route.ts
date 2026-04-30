@@ -3,16 +3,14 @@
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { verifyCronSecret } from "@/lib/cron-verification";
 
 export async function POST(req: Request) {
   try {
-    // Verify Vercel Cron Secret
-    const authHeader = req.headers.get("authorization");
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+    // Verify CRON Secret
+    const cronValidation = verifyCronSecret(req);
+    if (cronValidation instanceof NextResponse) {
+      return cronValidation;
     }
 
     const now = new Date();
@@ -21,12 +19,11 @@ export async function POST(req: Request) {
     const year = previousMonth.getFullYear();
 
     // Check if archive untuk bulan ini sudah ada
-    const existingArchive = await prisma.monthlyArchive.findUnique({
+    // Note: Composite unique key [month, year]
+    const existingArchive = await prisma.monthlyArchive.findFirst({
       where: {
-        month_year: {
-          month,
-          year,
-        },
+        month,
+        year,
       },
     });
 
@@ -138,12 +135,10 @@ export async function GET(req: Request) {
       include: { _count: { select: { attendanceRecords: true } } },
     });
 
-    const archive = await prisma.monthlyArchive.findUnique({
+    const archive = await prisma.monthlyArchive.findFirst({
       where: {
-        month_year: {
-          month,
-          year,
-        },
+        month,
+        year,
       },
       include: { _count: { select: { dailyLogs: true } } },
     });

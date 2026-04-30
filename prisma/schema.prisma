@@ -31,10 +31,12 @@ model AttendanceRecord {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  @@index([dailyLogId])
-  @@index([meetingCode])
-  @@index([dailyLogId, meetingCode])
-  @@index([createdAt])
+  // Performance Indexes
+  @@index([dailyLogId], name: "idx_attendance_dailylog")
+  @@index([meetingCode], name: "idx_attendance_meetingcode")
+  @@index([createdAt], name: "idx_attendance_createdat")
+  @@index([dailyLogId, meetingCode], name: "idx_attendance_daily_meeting")
+  @@index([dailyLogId, createdAt], name: "idx_attendance_daily_date")
 }
 
 // ============================================
@@ -43,7 +45,7 @@ model AttendanceRecord {
 // ============================================
 model DailyLog {
   id              String    @id @default(cuid())
-  date            DateTime  @db.Date @unique
+  date            DateTime  @db.Date @unique(map: "idx_dailylog_date_unique")
   status          DailyStatus @default(ACTIVE)
   pdfUrl          String?   @db.Text
   
@@ -56,9 +58,10 @@ model DailyLog {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  @@index([date])
-  @@index([status])
-  @@index([monthlyArchiveId])
+  // Performance Indexes
+  @@index([status], name: "idx_dailylog_status")
+  @@index([monthlyArchiveId], name: "idx_dailylog_monthlyarchive")
+  @@index([status, createdAt], name: "idx_dailylog_status_created")
 }
 
 // ============================================
@@ -80,9 +83,11 @@ model MonthlyArchive {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   
-  // Composite unique constraint (one archive per month-year)
-  @@unique([month, year])
-  @@index([status])
+  // Performance Indexes
+  @@unique([month, year], name: "idx_monthlyarchive_month_year_unique")
+  @@index([status], name: "idx_monthlyarchive_status")
+  @@index([year, month], name: "idx_monthlyarchive_year_month")
+  @@index([status, createdAt], name: "idx_monthlyarchive_status_created")
 }
 
 // ============================================

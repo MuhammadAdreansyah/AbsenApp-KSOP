@@ -3,6 +3,9 @@ import { Plus_Jakarta_Sans, Sora } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 
+// Validate environment variables on app startup
+import "@/lib/env";
+
 const jakartaSans = Plus_Jakarta_Sans({
   variable: "--font-jakarta-sans",
   subsets: ["latin"],

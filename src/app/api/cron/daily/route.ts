@@ -4,23 +4,21 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateDailyRecapPDF } from "@/lib/pdf/generator";
+import { verifyCronSecret } from "@/lib/cron-verification";
 
 export async function POST(req: Request) {
   try {
-    // Verify Vercel Cron Secret
-    const authHeader = req.headers.get("authorization");
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+    // Verify CRON Secret
+    const cronValidation = verifyCronSecret(req);
+    if (cronValidation instanceof NextResponse) {
+      return cronValidation;
     }
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     // Get today's daily log
-    const todayLog = await prisma.dailyLog.findUnique({
+    const todayLog = await prisma.dailyLog.findFirst({
       where: { date: today },
       include: { attendanceRecords: true },
     });
@@ -46,7 +44,7 @@ export async function POST(req: Request) {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const existingTomorrow = await prisma.dailyLog.findUnique({
+    const existingTomorrow = await prisma.dailyLog.findFirst({
       where: { date: tomorrow },
     });
 
