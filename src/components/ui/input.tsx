@@ -19,6 +19,7 @@ export function Input({ className, error, ...props }: InputProps) {
           error && "border-red-400 focus-visible:ring-red-500",
           className
         )}
+        suppressHydrationWarning
         {...props}
       />
       {error && <p className="mt-1 text-sm text-red-600">{error}</p>}

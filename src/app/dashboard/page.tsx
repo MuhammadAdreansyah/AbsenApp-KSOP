@@ -4,6 +4,7 @@
 import { AttendanceForm } from "@/components/attendance-form";
 import { DailyAttendanceView } from "@/components/daily-attendance-view";
 import { MeetingLinkGenerator } from "@/components/meeting-link-generator";
+import { DashboardDateTime } from "@/components/dashboard-datetime";
 
 interface DashboardPageProps {
   searchParams?: Promise<{
@@ -29,12 +30,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     ? resolvedSearchParams?.meeting[0]
     : resolvedSearchParams?.meeting;
   const meetingCode = normalizeMeetingCode(rawMeeting);
-  const currentDate = new Date().toLocaleDateString("id-ID", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
 
   return (
     <div className="min-h-screen">
@@ -53,16 +48,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               </p>
             </div>
 
-            <div className="rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-2 text-right">
-              <p className="text-sm font-semibold text-blue-900">{currentDate}</p>
-              <p className="mt-1 text-xs text-blue-700">
-                {new Date().toLocaleTimeString("id-ID", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                })}
-              </p>
-            </div>
+            <DashboardDateTime />
           </div>
         </div>
       </header>

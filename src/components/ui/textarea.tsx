@@ -19,6 +19,7 @@ export function Textarea({ className, error, ...props }: TextareaProps) {
           error && "border-red-400 focus-visible:ring-red-500",
           className
         )}
+        suppressHydrationWarning
         {...props}
       />
       {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
