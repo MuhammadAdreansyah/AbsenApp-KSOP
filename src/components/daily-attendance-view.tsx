@@ -76,18 +76,25 @@ export function DailyAttendanceView({ meetingCode = "default" }: DailyAttendance
         setError(null);
         
         // Gunakan API endpoint ringan untuk real-time polling
-        const response = await fetch(`/api/attendance/stats?meetingCode=${encodeURIComponent(meetingCode)}`);
+        const url = `/api/attendance/stats?meetingCode=${encodeURIComponent(meetingCode)}`;
+        console.log('[DailyAttendanceView] Fetching from:', url);
+        
+        const response = await fetch(url);
         const json = await response.json();
+        
+        console.log('[DailyAttendanceView] API Response:', json);
         
         if (isMounted) {
           if (json.success && json.data) {
+            console.log('[DailyAttendanceView] Setting data with', json.data.attendanceRecords?.length || 0, 'records');
             setDailyLog(json.data as DailyLog);
           } else {
+            console.log('[DailyAttendanceView] No data or success=false');
             setDailyLog(null);
           }
         }
       } catch (err) {
-        console.error("Error fetching attendance:", err);
+        console.error("[DailyAttendanceView] Error fetching attendance:", err);
         if (isMounted) {
           setError("Gagal memuat data absensi");
           setDailyLog(null);
@@ -99,20 +106,26 @@ export function DailyAttendanceView({ meetingCode = "default" }: DailyAttendance
       }
     };
 
+    // Initial fetch
+    console.log('[DailyAttendanceView] Component mounted, initial fetch');
     fetchData();
 
     const handleAttendanceUpdated = () => {
+      console.log('[DailyAttendanceView] Event "attendance:updated" received, fetching...');
       void fetchData(false);
     };
 
     window.addEventListener("attendance:updated", handleAttendanceUpdated);
+    console.log('[DailyAttendanceView] Event listener registered');
 
     // Polling real-time setiap 3 detik untuk instant update seperti WhatsApp
     const interval = setInterval(() => {
+      console.log('[DailyAttendanceView] Polling interval triggered');
       void fetchData(false);
     }, 3000);
     
     return () => {
+      console.log('[DailyAttendanceView] Cleanup: removing listener and interval');
       isMounted = false;
       window.removeEventListener("attendance:updated", handleAttendanceUpdated);
       clearInterval(interval);

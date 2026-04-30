@@ -73,10 +73,13 @@ export function AttendanceForm({ meetingCode = "default" }: AttendanceFormProps)
       const result = await submitAttendance(data, meetingCode);
 
       if (result.success) {
+        console.log('[AttendanceForm] Submission successful:', result.data?.id);
         toast.success(result.message);
         clearForm();
+        console.log('[AttendanceForm] Dispatching "attendance:updated" event');
         window.dispatchEvent(new Event("attendance:updated"));
       } else {
+        console.log('[AttendanceForm] Submission failed:', result.message);
         toast.error(result.message);
         if (result.errors) {
           Object.entries(result.errors).forEach(([field, message]) => {
@@ -85,6 +88,7 @@ export function AttendanceForm({ meetingCode = "default" }: AttendanceFormProps)
         }
       }
     } catch (error) {
+      console.error('[AttendanceForm] Error during submission:', error);
       toast.error("Terjadi kesalahan tak terduga");
       console.error(error);
     } finally {
