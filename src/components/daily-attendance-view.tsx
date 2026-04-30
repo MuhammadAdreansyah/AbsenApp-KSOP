@@ -195,13 +195,16 @@ export function DailyAttendanceView({ meetingCode = "default" }: DailyAttendance
           </div>
           {dailyLog && (
             <div className="text-right">
-              <div className="inline-block rounded-full px-4 py-1.5 text-sm font-semibold"
-                style={{
-                  backgroundColor: dailyLog.status === "FROZEN" ? "#ef4444" : "#0f9d67",
-                  color: "white"
-                }}
-              >
-                {dailyLog.status === "FROZEN" ? "Terkunci" : "Aktif"}
+              <div className="inline-flex items-center gap-2">
+                <span
+                  className="h-3 w-3 rounded-full status-dot-blink"
+                  style={{
+                    backgroundColor: dailyLog.status === "FROZEN" ? "#ef4444" : "#0f9d67",
+                  }}
+                />
+                <span className="text-sm font-semibold text-foreground">
+                  {dailyLog.status === "FROZEN" ? "Terkunci" : "Aktif"}
+                </span>
               </div>
             </div>
           )}
