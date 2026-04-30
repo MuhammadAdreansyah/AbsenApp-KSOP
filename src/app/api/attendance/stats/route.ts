@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const dailyLog = await prisma.dailyLog.findUnique({
+    const dailyLog = await prisma.dailyLog.findFirst({
       where: {
         date: today,
       },
@@ -42,20 +42,11 @@ export async function GET(request: Request) {
           id: null,
           date: today.toISOString(),
           status: "ACTIVE",
-          totalPeserta: 0,
-          terverifikasi: 0,
-          pending: 0,
+          pdfUrl: null,
           attendanceRecords: [],
         },
       });
     }
-
-    const terverifikasi = dailyLog.attendanceRecords.filter(
-      (r) => r.signatureUrl
-    ).length;
-    const pending = dailyLog.attendanceRecords.filter(
-      (r) => !r.signatureUrl
-    ).length;
 
     return Response.json({
       success: true,
@@ -63,9 +54,7 @@ export async function GET(request: Request) {
         id: dailyLog.id,
         date: dailyLog.date.toISOString(),
         status: dailyLog.status,
-        totalPeserta: dailyLog.attendanceRecords.length,
-        terverifikasi,
-        pending,
+        pdfUrl: dailyLog.pdfUrl ?? null,
         attendanceRecords: dailyLog.attendanceRecords.map((record) => ({
           id: record.id,
           nama: record.nama,
