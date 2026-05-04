@@ -1,13 +1,15 @@
 // src/components/daily-attendance-view.tsx
 // Component untuk display hari ini attendance + PDF download
+// OPTIMISASI: Remove base64 signature from polling, add Supabase Realtime
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getTodayAttendance } from "@/app/actions/attendance";
+import { createClient } from "@supabase/supabase-js";
 
 interface AttendanceRecord {
   id: string;
@@ -15,8 +17,8 @@ interface AttendanceRecord {
   nip?: string | null;
   agenda: string;
   meetingCode?: string;
-  signatureUrl: string;
   createdAt: Date | string;
+  // signatureUrl removed - reduce payload size
 }
 
 interface DailyLog {
@@ -37,11 +39,31 @@ interface DailyAttendanceViewProps {
   meetingCode?: string;
 }
 
+// Initialize Supabase realtime if env vars available
+const initSupabaseRealtime = () => {
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.log('[DailyAttendanceView] Supabase env not available, using polling only');
+      return null;
+    }
+    
+    return createClient(supabaseUrl, supabaseKey);
+  } catch (err) {
+    console.log('[DailyAttendanceView] Supabase client init failed:', err);
+    return null;
+  }
+};
+
 export function DailyAttendanceView({ meetingCode = "default" }: DailyAttendanceViewProps) {
   const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const supabaseClientRef = useRef(initSupabaseRealtime());
+  const realtimeSubscriptionRef = useRef<any>(null);
 
   const generateLatestPdf = async (): Promise<GeneratePdfResponse> => {
     if (!dailyLog) {
@@ -67,19 +89,32 @@ export function DailyAttendanceView({ meetingCode = "default" }: DailyAttendance
   // Fetch today's attendance dengan polling real-time setiap 3 detik
   useEffect(() => {
     let isMounted = true;
+    let abortController: AbortController | null = null;
+    let pollingInterval: NodeJS.Timeout | null = null;
 
     const fetchData = async (showLoading = true) => {
       try {
+        // Cancel previous request if still pending
+        if (abortController) {
+          abortController.abort();
+        }
+        
+        // Create new abort controller untuk request ini
+        abortController = new AbortController();
+        
         if (showLoading) {
           setIsLoading(true);
         }
         setError(null);
         
         // Gunakan API endpoint ringan untuk real-time polling
+        // OPTIMISASI: Payload sekarang jauh lebih kecil tanpa base64 signature
         const url = `/api/attendance/stats?meetingCode=${encodeURIComponent(meetingCode)}`;
         console.log('[DailyAttendanceView] Fetching from:', url);
         
-        const response = await fetch(url);
+        const response = await fetch(url, {
+          signal: abortController.signal,
+        });
         const json = await response.json();
         
         console.log('[DailyAttendanceView] API Response:', json);
@@ -94,6 +129,12 @@ export function DailyAttendanceView({ meetingCode = "default" }: DailyAttendance
           }
         }
       } catch (err) {
+        // Ignore AbortError - ini normal saat request di-cancel
+        if (err instanceof Error && err.name === 'AbortError') {
+          console.log('[DailyAttendanceView] Request aborted (previous request replaced)');
+          return;
+        }
+        
         console.error("[DailyAttendanceView] Error fetching attendance:", err);
         if (isMounted) {
           setError("Gagal memuat data absensi");
@@ -111,24 +152,70 @@ export function DailyAttendanceView({ meetingCode = "default" }: DailyAttendance
     fetchData();
 
     const handleAttendanceUpdated = () => {
-      console.log('[DailyAttendanceView] Event "attendance:updated" received, fetching...');
-      void fetchData(false);
+      console.log('[DailyAttendanceView] Event "attendance:updated" received, fetching immediately...');
+      void fetchData(false); // Immediate fetch on event
     };
 
     window.addEventListener("attendance:updated", handleAttendanceUpdated);
     console.log('[DailyAttendanceView] Event listener registered');
 
-    // Polling real-time setiap 3 detik untuk instant update seperti WhatsApp
-    const interval = setInterval(() => {
+    // Setup Supabase Realtime listener untuk instant push updates
+    if (supabaseClientRef.current) {
+      try {
+        console.log('[DailyAttendanceView] Setting up Supabase Realtime listener...');
+        
+        // Subscribe ke changes di AttendanceRecord table
+        realtimeSubscriptionRef.current = supabaseClientRef.current
+          .channel(`attendance:${meetingCode}`)
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'AttendanceRecord',
+              filter: `meetingCode=eq.${meetingCode}`
+            },
+            (payload) => {
+              console.log('[DailyAttendanceView] Realtime INSERT event:', payload);
+              void fetchData(false); // Fetch data immediately on new attendance
+            }
+          )
+          .subscribe();
+          
+        console.log('[DailyAttendanceView] Supabase Realtime listener ready');
+      } catch (err) {
+        console.log('[DailyAttendanceView] Supabase Realtime setup failed:', err);
+      }
+    }
+
+    // Polling real-time setiap 3 detik sebagai fallback
+    pollingInterval = setInterval(() => {
       console.log('[DailyAttendanceView] Polling interval triggered');
       void fetchData(false);
     }, 3000);
     
     return () => {
-      console.log('[DailyAttendanceView] Cleanup: removing listener and interval');
+      console.log('[DailyAttendanceView] Cleanup: removing listeners and intervals');
       isMounted = false;
       window.removeEventListener("attendance:updated", handleAttendanceUpdated);
-      clearInterval(interval);
+      
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+      
+      // Cleanup Supabase realtime
+      if (realtimeSubscriptionRef.current) {
+        try {
+          supabaseClientRef.current?.removeChannel(realtimeSubscriptionRef.current);
+        } catch (err) {
+          console.log('[DailyAttendanceView] Supabase cleanup error:', err);
+        }
+      }
+      
+      // Cancel any pending request
+      if (abortController) {
+        abortController.abort();
+      }
     };
   }, [meetingCode]);
 
@@ -202,22 +289,24 @@ export function DailyAttendanceView({ meetingCode = "default" }: DailyAttendance
   return (
     <Card className="overflow-hidden border-slate-200 bg-white shadow-[0_12px_35px_rgba(15,23,42,0.08)] h-full flex flex-col">
       <CardHeader className="rounded-t-2xl border-b border-slate-200 bg-white">
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex-1">
             <CardTitle className="text-2xl text-slate-900">Rekap Peserta Rapat</CardTitle>
+            <p className="mt-1 text-sm text-slate-500">Monitoring kehadiran real-time dengan update otomatis</p>
           </div>
           {dailyLog && (
-            <div className="text-right">
-              <div className="inline-flex items-center gap-2">
-                <span
-                  className="h-3 w-3 rounded-full status-dot-blink"
-                  style={{
-                    backgroundColor: dailyLog.status === "FROZEN" ? "#ef4444" : "#0f9d67",
-                  }}
-                />
-                <span className="text-sm font-semibold text-foreground">
-                  {dailyLog.status === "FROZEN" ? "Terkunci" : "Aktif"}
-                </span>
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <div className="flex items-center justify-end gap-2">
+                  <span
+                    className={`h-3 w-3 rounded-full ${
+                      dailyLog.status === "FROZEN" ? "bg-red-500" : "bg-emerald-500 animate-pulse"
+                    }`}
+                  />
+                  <span className="text-sm font-semibold text-slate-700">
+                    {dailyLog.status === "FROZEN" ? "Terkunci" : "Aktif"}
+                  </span>
+                </div>
               </div>
             </div>
           )}
@@ -227,93 +316,175 @@ export function DailyAttendanceView({ meetingCode = "default" }: DailyAttendance
       <CardContent className="pt-6 flex-1 flex flex-col">
         {dailyLog && dailyLog.attendanceRecords.length > 0 ? (
           <div className="flex flex-col gap-6 h-full">
-            {/* Info Box */}
-            <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-blue-800">Informasi Peserta</p>
-              <p className="mt-2 text-sm text-blue-900/85">
-                Total {dailyLog.attendanceRecords.length} peserta hadir, {dailyLog.attendanceRecords.filter((r) => r.signatureUrl).length} sudah melakukan verifikasi tanda tangan digital.
-              </p>
-            </div>
+            {/* Stats Section - Komunikatif & Informatif */}
+            <div className="space-y-3">
+              {/* Meeting Overview */}
+              <div className="rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-50 to-white p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">📅</span>
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">Ringkasan Rapat</span>
+                  </div>
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
+                    dailyLog.status === "FROZEN" 
+                      ? "bg-red-100 text-red-700" 
+                      : "bg-emerald-100 text-emerald-700"
+                  }`}>
+                    <span className={`h-2 w-2 rounded-full ${dailyLog.status === "FROZEN" ? "bg-red-500" : "bg-emerald-500"}`} />
+                    {dailyLog.status === "FROZEN" ? "Rapat Berakhir" : "Rapat Berlangsung"}
+                  </span>
+                </div>
+                <p className="text-sm text-slate-600">
+                  {new Date(dailyLog.date).toLocaleDateString("id-ID", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </p>
+              </div>
 
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 p-5 shadow-sm">
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-blue-700">
-                    {dailyLog.attendanceRecords.length}
+              {/* Key Metrics Grid */}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {/* Total Peserta */}
+                <div className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100/60 p-4 shadow-sm hover:shadow-md transition">
+                  <div className="flex flex-col items-center text-center">
+                    <span className="text-2xl mb-1">👥</span>
+                    <div className="text-2xl font-bold text-blue-700">
+                      {dailyLog.attendanceRecords.length}
+                    </div>
+                    <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mt-1">Peserta</p>
                   </div>
-                  <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-blue-600">
-                    Total Peserta
-                  </p>
+                </div>
+
+                {/* Waktu Mulai */}
+                <div className="rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100/60 p-4 shadow-sm hover:shadow-md transition">
+                  <div className="flex flex-col items-center text-center">
+                    <span className="text-2xl mb-1">🕐</span>
+                    <div className="text-lg font-bold text-amber-700">
+                      {dailyLog.attendanceRecords.length > 0
+                        ? new Date(dailyLog.attendanceRecords[dailyLog.attendanceRecords.length - 1].createdAt).toLocaleTimeString("id-ID", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "-"}
+                    </div>
+                    <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide mt-1">Mulai</p>
+                  </div>
+                </div>
+
+                {/* Waktu Terakhir */}
+                <div className="rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-violet-100/60 p-4 shadow-sm hover:shadow-md transition">
+                  <div className="flex flex-col items-center text-center">
+                    <span className="text-2xl mb-1">⏱️</span>
+                    <div className="text-lg font-bold text-violet-700">
+                      {dailyLog.attendanceRecords.length > 0
+                        ? new Date(dailyLog.attendanceRecords[0].createdAt).toLocaleTimeString("id-ID", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "-"}
+                    </div>
+                    <p className="text-xs font-semibold text-violet-600 uppercase tracking-wide mt-1">Terakhir</p>
+                  </div>
+                </div>
+
+                {/* Status Real-time */}
+                <div className="rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100/60 p-4 shadow-sm hover:shadow-md transition">
+                  <div className="flex flex-col items-center text-center">
+                    <span className="text-2xl mb-1 animate-pulse">🟢</span>
+                    <div className="text-lg font-bold text-emerald-700">AKTIF</div>
+                    <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wide mt-1">Live</p>
+                  </div>
                 </div>
               </div>
-              <div className="rounded-2xl border border-green-200 bg-gradient-to-br from-green-50 to-green-100 p-5 shadow-sm">
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-green-700">
-                    {dailyLog.attendanceRecords.filter((r) => r.signatureUrl).length}
+
+              {/* Duration Info */}
+              {dailyLog.attendanceRecords.length > 1 && (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-slate-700">⏳ Durasi Absensi:</span>
+                      <span className="font-mono text-sm font-bold text-slate-900">
+                        {Math.round(
+                          (new Date(dailyLog.attendanceRecords[0].createdAt).getTime() -
+                            new Date(dailyLog.attendanceRecords[dailyLog.attendanceRecords.length - 1].createdAt).getTime()) /
+                            60000
+                        )}
+                        {" min"}
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-600">
+                      {dailyLog.attendanceRecords.length} peserta terdaftar
+                    </div>
                   </div>
-                  <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-green-600">
-                    Terverifikasi
-                  </p>
                 </div>
-              </div>
-              <div className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100 p-5 shadow-sm">
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-amber-700">
-                    {dailyLog.attendanceRecords.filter((r) => !r.signatureUrl).length}
-                  </div>
-                  <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-amber-600">
-                    Pending
-                  </p>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Attendance List */}
             <div className="flex flex-col flex-1 min-h-0">
-              <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-gray-900">
-                <span className="rounded-lg bg-slate-800 px-3 py-1 text-xs font-bold text-white">DAFTAR</span>
-                Peserta Hadir ({dailyLog.attendanceRecords.length})
-              </h3>
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="flex items-center gap-2 text-sm font-bold text-gray-900">
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold">📋</span>
+                  Daftar Peserta Hadir
+                </h3>
+                <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700">
+                  {dailyLog.attendanceRecords.length} peserta
+                </span>
+              </div>
               <div className="max-h-[32rem] space-y-2 overflow-y-auto pr-2">
                 {dailyLog.attendanceRecords.map((record, idx) => (
                   <div
                     key={record.id}
-                    className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:bg-slate-50"
+                    className="group rounded-xl border border-slate-200 bg-gradient-to-r from-white to-slate-50/50 p-3 transition hover:border-blue-300 hover:bg-blue-50/40 hover:shadow-md"
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-700 text-white text-xs font-bold">
-                            {idx + 1}
+                    <div className="flex items-start gap-3">
+                      {/* Number Badge */}
+                      <div className="flex-shrink-0 mt-0.5">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white text-xs font-bold shadow-sm group-hover:shadow-md">
+                          {idx + 1}
+                        </span>
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-bold text-gray-900 truncate">{record.nama}</p>
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold flex-shrink-0">
+                            <span>✓</span>
+                            <span>Hadir</span>
                           </span>
-                          <p className="font-bold text-gray-900">{record.nama}</p>
-                          {record.signatureUrl && (
-                            <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">
-                              Terverifikasi
-                            </span>
-                          )}
-                          {!record.signatureUrl && (
-                            <span className="rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-700">
-                              Pending
-                            </span>
-                          )}
                         </div>
+
+                        {/* NIP */}
                         {record.nip && (
-                          <p className="ml-10 text-xs font-medium text-gray-600">
-                            NIP: <span className="font-mono">{record.nip}</span>
+                          <p className="mt-1 text-xs text-gray-600">
+                            <span className="font-semibold">NIP:</span>{" "}
+                            <span className="font-mono text-gray-700">{record.nip}</span>
                           </p>
                         )}
-                        <p className="ml-10 mt-2 text-sm font-medium text-gray-700">
-                          Kegiatan: {record.agenda.substring(0, 65)}
-                          {record.agenda.length > 60 ? "..." : ""}
+
+                        {/* Agenda */}
+                        <p className="mt-1.5 text-sm text-gray-700 leading-snug">
+                          <span className="font-semibold text-gray-600">Kegiatan:</span>{" "}
+                          <span className="text-gray-700">
+                            {record.agenda.substring(0, 65)}
+                            {record.agenda.length > 60 ? "..." : ""}
+                          </span>
                         </p>
-                        <p className="ml-8 mt-1 text-xs text-gray-400">
-                          {new Date(record.createdAt).toLocaleTimeString("id-ID", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </p>
+
+                        {/* Time */}
+                        <div className="mt-2 flex items-center gap-1 text-xs text-gray-500">
+                          <span>🕐</span>
+                          <span>
+                            {new Date(record.createdAt).toLocaleTimeString("id-ID", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              second: "2-digit",
+                            })}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>

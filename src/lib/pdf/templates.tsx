@@ -352,8 +352,9 @@ export function DailyRecapPDF({
 
   const generatedAt = new Date().toLocaleString("id-ID");
   const resolvedMeetingTitle = meetingTitle || records[0]?.agenda || "Rapat Koordinasi";
-  const docNumber = `ABS-${date.getUTCFullYear()}/${String(date.getUTCMonth() + 1).padStart(2, "0")}/${String(
-    date.getUTCDate()
+  // Gunakan local date methods (bukan UTC) untuk menghindari timezone shift
+  const docNumber = `ABS-${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, "0")}/${String(
+    date.getDate()
   ).padStart(2, "0")}`;
 
   const terverifikasi = records.filter((r) => r.signatureUrl).length;

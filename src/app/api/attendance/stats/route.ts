@@ -1,19 +1,32 @@
 // src/app/api/attendance/stats/route.ts
 // Lightweight API endpoint untuk fetch statistik attendance real-time
+// OPTIMISASI: Exclude signatureUrl dari response untuk reduce payload
 
 import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0; // No cache
 
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
     const meetingCode = url.searchParams.get("meetingCode") || "default";
 
+    // Get today's date range in UTC (PENTING: match dengan attendance.ts logic)
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const utcYear = today.getUTCFullYear();
+    const utcMonth = today.getUTCMonth();
+    const utcDay = today.getUTCDate();
+    const utcMidnight = new Date(Date.UTC(utcYear, utcMonth, utcDay, 0, 0, 0, 0));
+    const tomorrowMidnight = new Date(Date.UTC(utcYear, utcMonth, utcDay + 1, 0, 0, 0, 0));
 
     const dailyLog = await prisma.dailyLog.findFirst({
       where: {
-        date: today,
+        date: {
+          gte: utcMidnight,
+          lt: tomorrowMidnight,
+        },
       },
       include: {
         attendanceRecords: {
@@ -25,7 +38,8 @@ export async function GET(request: Request) {
             nama: true,
             nip: true,
             agenda: true,
-            signatureUrl: true,
+            // PENTING: EXCLUDE signatureUrl untuk reduce payload size
+            // Signature di-load on-demand via separate endpoint jika diperlukan
             createdAt: true,
           },
           orderBy: {
@@ -36,11 +50,11 @@ export async function GET(request: Request) {
     });
 
     if (!dailyLog) {
-      return Response.json({
+      return NextResponse.json({
         success: true,
         data: {
           id: null,
-          date: today.toISOString(),
+          date: utcMidnight.toISOString(),
           status: "ACTIVE",
           pdfUrl: null,
           attendanceRecords: [],
@@ -48,7 +62,7 @@ export async function GET(request: Request) {
       });
     }
 
-    return Response.json({
+    return NextResponse.json({
       success: true,
       data: {
         id: dailyLog.id,
@@ -60,17 +74,23 @@ export async function GET(request: Request) {
           nama: record.nama,
           nip: record.nip,
           agenda: record.agenda,
-          signatureUrl: record.signatureUrl,
+          // Jangan include signatureUrl - ini reduce payload drastis!
           createdAt:
             record.createdAt instanceof Date
               ? record.createdAt.toISOString()
               : record.createdAt,
         })),
       },
+    }, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      }
     });
   } catch (error) {
     console.error("Error fetching attendance stats:", error);
-    return Response.json(
+    return NextResponse.json(
       {
         success: false,
         message: "Gagal fetch statistik absensi",

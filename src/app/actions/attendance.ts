@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { AttendanceFormSchema } from "@/lib/validations/attendance";
 import { sanitizeInput } from "@/lib/security";
 import { logger } from "@/lib/logger";
+import { getSupabaseAdminClient, getSupabasePdfBucketName } from "@/lib/supabase-server";
 import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
 
@@ -43,33 +44,104 @@ export async function submitAttendance(
       signature: validatedData.signature,
     };
 
-    // 3. Get or create today's DailyLog
+    // 3. Get or create today's DailyLog with timezone-aware date range
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Create local midnight date untuk query/comparison
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
+    const tomorrowStart = new Date(todayStart);
+    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
 
-    // First check if today's DailyLog exists
-    let dailyLog = await prisma.dailyLog.findFirst({
+    // PENTING: Use upsert to avoid race condition
+    // If another request creates DailyLog simultaneously, upsert handles it
+    const utcYear = today.getUTCFullYear();
+    const utcMonth = today.getUTCMonth();
+    const utcDay = today.getUTCDate();
+    const utcMidnight = new Date(Date.UTC(utcYear, utcMonth, utcDay, 0, 0, 0, 0));
+
+    let dailyLog = await prisma.dailyLog.upsert({
       where: {
-        date: today,
+        date: utcMidnight,
+      },
+      update: {
+        // If exists, just update status (in case it was FROZEN)
+        status: "ACTIVE",
+      },
+      create: {
+        date: utcMidnight,
+        status: "ACTIVE",
       },
     });
 
-    // Create if it doesn't exist
-    if (!dailyLog) {
-      dailyLog = await prisma.dailyLog.create({
-        data: {
-          date: today,
-          status: "ACTIVE",
-        },
-      });
+    // 4. Upload signature ke Supabase Storage (bukan simpan di database)
+    // PENTING: Ini fix untuk real-time delay - eliminate base64 dari database
+    let signatureUrl = sanitizedData.signature; // Default: fallback to base64
+    const supabaseClient = getSupabaseAdminClient();
+    
+    if (supabaseClient && sanitizedData.signature) {
+      try {
+        // Generate unique filename dengan timestamp
+        const timestamp = Date.now();
+        const sanitizedNama = sanitizedData.nama
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '-')
+          .replace(/-+/g, '-')
+          .slice(0, 30);
+        const fileName = `${timestamp}-${sanitizedNama}.png`;
+        const storagePath = `signatures/${dailyLog.date.getFullYear()}/${String(dailyLog.date.getMonth() + 1).padStart(2, '0')}/${fileName}`;
+        
+        // Convert base64 data URL ke Buffer
+        const base64Data = sanitizedData.signature.replace(/^data:image\/\w+;base64,/, '');
+        const buffer = Buffer.from(base64Data, 'base64');
+        
+        // Use correct bucket name from config
+        const bucketName = getSupabasePdfBucketName();
+        
+        // Upload ke Supabase
+        const uploadResult = await supabaseClient.storage
+          .from(bucketName)
+          .upload(storagePath, buffer, {
+            contentType: 'image/png',
+            cacheControl: '3600',
+            upsert: false,
+          });
+        
+        if (uploadResult.error) {
+          logger.warn(
+            { error: uploadResult.error, meetingCode, nama: sanitizedData.nama },
+            "Signature upload ke Supabase failed, fallback ke database"
+          );
+          // Fallback: simpan ke database jika upload gagal
+          signatureUrl = sanitizedData.signature;
+        } else {
+          // Get public URL
+          const publicUrlResult = supabaseClient.storage
+            .from(bucketName)
+            .getPublicUrl(storagePath);
+          
+          signatureUrl = publicUrlResult.data.publicUrl;
+          logger.info(
+            { storagePath, meetingCode, nama: sanitizedData.nama },
+            "Signature uploaded to Supabase Storage"
+          );
+        }
+      } catch (uploadErr) {
+        logger.warn(
+          { error: uploadErr, meetingCode, nama: sanitizedData.nama },
+          "Signature upload exception, fallback ke database"
+        );
+        // Fallback: simpan ke database jika exception
+        signatureUrl = sanitizedData.signature;
+      }
+    } else {
+      // Fallback untuk local development tanpa Supabase
+      logger.info(
+        { hasClient: !!supabaseClient, hasSignature: !!sanitizedData.signature },
+        "Using fallback signature storage (base64 in database)"
+      );
+      signatureUrl = sanitizedData.signature;
     }
 
-    // 4. Save signature as base64 to a temporary location
-    // In production, you'd upload to cloud storage (S3, Cloudinary, etc)
-    // For now, we'll store it in the database as the signatureUrl
-    const signatureUrl = sanitizedData.signature;
-
-    // 5. Create AttendanceRecord
+    // 5. Create AttendanceRecord dengan signature URL (bukan base64)
     const record = await prisma.attendanceRecord.create({
       data: {
         nama: sanitizedData.nama,
@@ -120,6 +192,14 @@ export async function submitAttendance(
         };
       }
 
+      if (error.code === "P2002") {
+        logger.warn({ error: error.message }, "Unique constraint violation");
+        return {
+          success: false,
+          message: "Data sudah ada atau terjadi konflik. Silakan refresh halaman dan coba lagi.",
+        };
+      }
+
       if (error.code === "P2021") {
         logger.error({ error: error.message }, "Database schema not ready");
         return {
@@ -152,11 +232,19 @@ export async function submitAttendance(
 export async function getTodayAttendance(meetingCode = "default") {
   try {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Use UTC midnight (PENTING: match dengan attendance submission logic)
+    const utcYear = today.getUTCFullYear();
+    const utcMonth = today.getUTCMonth();
+    const utcDay = today.getUTCDate();
+    const utcMidnight = new Date(Date.UTC(utcYear, utcMonth, utcDay, 0, 0, 0, 0));
+    const tomorrowMidnight = new Date(Date.UTC(utcYear, utcMonth, utcDay + 1, 0, 0, 0, 0));
 
     const dailyLog = await prisma.dailyLog.findFirst({
       where: {
-        date: today,
+        date: {
+          gte: utcMidnight,
+          lt: tomorrowMidnight,
+        },
       },
       include: {
         attendanceRecords: {

@@ -100,19 +100,17 @@ export async function generateDailyRecapPDF(
         include: includeRecords,
       });
     } else {
-      const targetDate = new Date(date as Date);
-      const utcYear = targetDate.getUTCFullYear();
-      const utcMonth = targetDate.getUTCMonth();
-      const utcDay = targetDate.getUTCDate();
-
-      const startUtc = new Date(Date.UTC(utcYear, utcMonth, utcDay, 0, 0, 0, 0));
-      const endUtc = new Date(Date.UTC(utcYear, utcMonth, utcDay + 1, 0, 0, 0, 0));
+      const today = date as Date;
+      // Gunakan local date construction untuk menghindari timezone shift (sama seperti di attendance.ts)
+      const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
+      const tomorrowStart = new Date(todayStart);
+      tomorrowStart.setDate(tomorrowStart.getDate() + 1);
 
       dailyLog = await prisma.dailyLog.findFirst({
         where: {
           date: {
-            gte: startUtc,
-            lt: endUtc,
+            gte: todayStart,
+            lt: tomorrowStart,
           },
         },
         include: includeRecords,
@@ -147,11 +145,11 @@ export async function generateDailyRecapPDF(
       />
     );
 
-    // 3. Generate filename
-    const utcYear = recapDate.getUTCFullYear();
-    const utcMonth = String(recapDate.getUTCMonth() + 1).padStart(2, "0");
-    const utcDay = String(recapDate.getUTCDate()).padStart(2, "0");
-    const dateStr = `${utcYear}-${utcMonth}-${utcDay}`;
+    // 3. Generate filename using local date methods (tidak UTC) untuk avoid timezone shift
+    const year = recapDate.getFullYear();
+    const month = String(recapDate.getMonth() + 1).padStart(2, "0");
+    const day = String(recapDate.getDate()).padStart(2, "0");
+    const dateStr = `${year}-${month}-${day}`;
     const safeMeetingCode = (meetingCode || "default")
       .toLowerCase()
       .replace(/[^a-z0-9-]/g, "-")
@@ -159,7 +157,7 @@ export async function generateDailyRecapPDF(
       .replace(/^-|-$/g, "")
       .slice(0, 60) || "default";
     const fileName = `absensi-harian-${dateStr}-${safeMeetingCode}.pdf`;
-    const storagePath = `daily/${utcYear}/${utcMonth}/${fileName}`;
+    const storagePath = `daily/${year}/${month}/${fileName}`;
 
     const supabaseClient = getSupabaseAdminClient();
     const bucketName = getSupabasePdfBucketName();
