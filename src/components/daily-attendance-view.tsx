@@ -316,111 +316,97 @@ export function DailyAttendanceView({ meetingCode = "default" }: DailyAttendance
       <CardContent className="pt-6 flex-1 flex flex-col">
         {dailyLog && dailyLog.attendanceRecords.length > 0 ? (
           <div className="flex flex-col gap-6 h-full">
-            {/* Stats Section - Komunikatif & Informatif */}
-            <div className="space-y-3">
-              {/* Meeting Overview */}
-              <div className="rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-50 to-white p-4 shadow-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">📅</span>
-                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">Ringkasan Rapat</span>
+            {/* Stats Section */}
+            <div className="space-y-2">
+                {/* Main Stats - Inline */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 py-2">
+                  {/* Peserta Count */}
+                  <div className="flex items-baseline gap-2">
+                    <div className="text-3xl font-bold text-blue-600">{dailyLog.attendanceRecords.length}</div>
+                    <div className="text-xs font-semibold text-slate-600 uppercase">Peserta</div>
                   </div>
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
-                    dailyLog.status === "FROZEN" 
-                      ? "bg-red-100 text-red-700" 
-                      : "bg-emerald-100 text-emerald-700"
-                  }`}>
-                    <span className={`h-2 w-2 rounded-full ${dailyLog.status === "FROZEN" ? "bg-red-500" : "bg-emerald-500"}`} />
-                    {dailyLog.status === "FROZEN" ? "Rapat Berakhir" : "Rapat Berlangsung"}
-                  </span>
-                </div>
-                <p className="text-sm text-slate-600">
-                  {new Date(dailyLog.date).toLocaleDateString("id-ID", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </p>
-              </div>
 
-              {/* Key Metrics Grid */}
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {/* Total Peserta */}
-                <div className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100/60 p-4 shadow-sm hover:shadow-md transition">
-                  <div className="flex flex-col items-center text-center">
-                    <span className="text-2xl mb-1">👥</span>
-                    <div className="text-2xl font-bold text-blue-700">
-                      {dailyLog.attendanceRecords.length}
-                    </div>
-                    <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mt-1">Peserta</p>
-                  </div>
-                </div>
-
-                {/* Waktu Mulai */}
-                <div className="rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100/60 p-4 shadow-sm hover:shadow-md transition">
-                  <div className="flex flex-col items-center text-center">
-                    <span className="text-2xl mb-1">🕐</span>
-                    <div className="text-lg font-bold text-amber-700">
+                  {/* Time Range */}
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="font-semibold text-amber-600">
                       {dailyLog.attendanceRecords.length > 0
                         ? new Date(dailyLog.attendanceRecords[dailyLog.attendanceRecords.length - 1].createdAt).toLocaleTimeString("id-ID", {
                             hour: "2-digit",
                             minute: "2-digit",
                           })
                         : "-"}
-                    </div>
-                    <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide mt-1">Mulai</p>
-                  </div>
-                </div>
-
-                {/* Waktu Terakhir */}
-                <div className="rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-violet-100/60 p-4 shadow-sm hover:shadow-md transition">
-                  <div className="flex flex-col items-center text-center">
-                    <span className="text-2xl mb-1">⏱️</span>
-                    <div className="text-lg font-bold text-violet-700">
+                    </span>
+                    <span className="text-slate-300">−</span>
+                    <span className="font-semibold text-violet-600">
                       {dailyLog.attendanceRecords.length > 0
                         ? new Date(dailyLog.attendanceRecords[0].createdAt).toLocaleTimeString("id-ID", {
                             hour: "2-digit",
                             minute: "2-digit",
                           })
                         : "-"}
-                    </div>
-                    <p className="text-xs font-semibold text-violet-600 uppercase tracking-wide mt-1">Terakhir</p>
+                    </span>
                   </div>
+
+                  {/* Status */}
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold ${
+                    dailyLog.status === "FROZEN" 
+                      ? "bg-red-100 text-red-700" 
+                      : "bg-emerald-100 text-emerald-700"
+                  }`}>
+                    <span className={`h-2 w-2 rounded-full ${dailyLog.status === "FROZEN" ? "bg-red-500" : "bg-emerald-500 animate-pulse"}`} />
+                    {dailyLog.status === "FROZEN" ? "Selesai" : "Berlangsung"}
+                  </span>
                 </div>
 
-                {/* Status Real-time */}
-                <div className="rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100/60 p-4 shadow-sm hover:shadow-md transition">
-                  <div className="flex flex-col items-center text-center">
-                    <span className="text-2xl mb-1 animate-pulse">🟢</span>
-                    <div className="text-lg font-bold text-emerald-700">AKTIF</div>
-                    <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wide mt-1">Live</p>
+                {/* Additional Info - Horizontal */}
+                <div className="flex flex-wrap gap-4 text-xs py-1">
+                  {/* Durasi */}
+                  <div className="flex items-center gap-2 text-slate-600">
+                    <span className="font-semibold">Durasi:</span>
+                    <span className="font-bold text-teal-600">
+                      {dailyLog.attendanceRecords.length > 1
+                        ? (() => {
+                            const firstTime = new Date(dailyLog.attendanceRecords[dailyLog.attendanceRecords.length - 1].createdAt).getTime();
+                            const lastTime = new Date(dailyLog.attendanceRecords[0].createdAt).getTime();
+                            const minutes = Math.round((lastTime - firstTime) / 60000);
+                            const hours = Math.floor(minutes / 60);
+                            const mins = minutes % 60;
+                            return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+                          })()
+                        : "-"}
+                    </span>
+                  </div>
+
+                  {/* Frekuensi */}
+                  <div className="flex items-center gap-2 text-slate-600">
+                    <span className="font-semibold">Freq:</span>
+                    <span className="font-bold text-orange-600">
+                      {dailyLog.attendanceRecords.length > 1
+                        ? (() => {
+                            const firstTime = new Date(dailyLog.attendanceRecords[dailyLog.attendanceRecords.length - 1].createdAt).getTime();
+                            const lastTime = new Date(dailyLog.attendanceRecords[0].createdAt).getTime();
+                            const minutes = Math.ceil((lastTime - firstTime) / 60000);
+                            const freq = (dailyLog.attendanceRecords.length / Math.max(minutes, 1)).toFixed(1);
+                            return `${freq}/min`;
+                          })()
+                        : "-"}
+                    </span>
+                  </div>
+
+                  {/* Tanggal */}
+                  <div className="flex items-center gap-2 text-slate-600">
+                    <span className="font-semibold">Tgl:</span>
+                    <span className="font-bold text-indigo-600">
+                      {dailyLog.attendanceRecords.length > 0
+                        ? new Date(dailyLog.attendanceRecords[0].createdAt).toLocaleDateString("id-ID")
+                        : "-"}
+                    </span>
                   </div>
                 </div>
               </div>
 
-              {/* Duration Info */}
-              {dailyLog.attendanceRecords.length > 1 && (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-slate-700">⏳ Durasi Absensi:</span>
-                      <span className="font-mono text-sm font-bold text-slate-900">
-                        {Math.round(
-                          (new Date(dailyLog.attendanceRecords[0].createdAt).getTime() -
-                            new Date(dailyLog.attendanceRecords[dailyLog.attendanceRecords.length - 1].createdAt).getTime()) /
-                            60000
-                        )}
-                        {" min"}
-                      </span>
-                    </div>
-                    <div className="text-xs text-slate-600">
-                      {dailyLog.attendanceRecords.length} peserta terdaftar
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* Divider */}
+            <div className="border-t border-slate-200"></div>
 
             {/* Attendance List */}
             <div className="flex flex-col flex-1 min-h-0">
