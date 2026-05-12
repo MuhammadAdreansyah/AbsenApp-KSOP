@@ -19,6 +19,7 @@ model AttendanceRecord {
   id              String    @id @default(cuid())
   nama            String    @db.VarChar(255)
   nip             String?   @db.VarChar(50)
+  jabatan         String?   @db.VarChar(100)
   agenda          String    @db.Text
   meetingCode     String    @default("default") @db.VarChar(120)
   signatureUrl    String    @db.Text

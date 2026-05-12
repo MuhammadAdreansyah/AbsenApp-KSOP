@@ -316,6 +316,7 @@ interface AttendanceRecord {
   id: string;
   nama: string;
   nip?: string | null;
+  jabatan?: string | null;
   agenda: string;
   signatureUrl: string;
   createdAt: Date;
@@ -469,7 +470,11 @@ export function DailyRecapPDF({
                     <Text style={styles.bodyText}>{record.nama}</Text>
                   </View>
                   <View style={[styles.tableCellBase, styles.colNip]}>
-                    <Text style={styles.bodyText}>{record.nip || "-"}</Text>
+                    <Text style={styles.bodyText}>
+                      {record.jabatan ? `${record.jabatan}` : "-"}
+                      {record.jabatan && record.nip ? " / " : ""}
+                      {record.nip ? record.nip : ""}
+                    </Text>
                   </View>
                   <View style={[styles.tableCellBase, styles.colAgenda]}>
                     <Text style={styles.bodyText}>{record.agenda}</Text>

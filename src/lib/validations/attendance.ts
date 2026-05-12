@@ -7,7 +7,12 @@ export const AttendanceFormSchema = z.object({
   nama: z.string().min(3, "Nama harus minimal 3 karakter").max(255, "Nama terlalu panjang"),
   nip: z
     .string()
-    .max(50, "Jabatan / NIP maksimal 50 karakter")
+    .max(50, "NIP maksimal 50 karakter")
+    .optional()
+    .or(z.literal("")),
+  jabatan: z
+    .string()
+    .max(100, "Jabatan maksimal 100 karakter")
     .optional()
     .or(z.literal("")),
   agenda: z.string().min(5, "Agenda harus minimal 5 karakter").max(500, "Agenda terlalu panjang"),

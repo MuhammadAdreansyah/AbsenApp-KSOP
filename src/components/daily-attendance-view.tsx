@@ -15,6 +15,7 @@ interface AttendanceRecord {
   id: string;
   nama: string;
   nip?: string | null;
+  jabatan?: string | null;
   agenda: string;
   meetingCode?: string;
   createdAt: Date | string;
@@ -471,6 +472,14 @@ export function DailyAttendanceView({ meetingCode = "default" }: DailyAttendance
                           <p className="mt-1 text-xs text-gray-600">
                             <span className="font-semibold">NIP:</span>{" "}
                             <span className="font-mono text-gray-700">{record.nip}</span>
+                          </p>
+                        )}
+
+                        {/* Jabatan */}
+                        {record.jabatan && (
+                          <p className="mt-1 text-xs text-gray-600">
+                            <span className="font-semibold">Jabatan:</span>{" "}
+                            <span className="text-gray-700">{record.jabatan}</span>
                           </p>
                         )}
 

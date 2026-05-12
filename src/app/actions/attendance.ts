@@ -40,6 +40,7 @@ export async function submitAttendance(
     const sanitizedData = {
       nama: sanitizeInput(validatedData.nama),
       nip: validatedData.nip ? sanitizeInput(validatedData.nip) : null,
+      jabatan: validatedData.jabatan ? sanitizeInput(validatedData.jabatan) : null,
       agenda: sanitizeInput(validatedData.agenda),
       signature: validatedData.signature,
     };
@@ -146,6 +147,7 @@ export async function submitAttendance(
       data: {
         nama: sanitizedData.nama,
         nip: sanitizedData.nip,
+        jabatan: sanitizedData.jabatan,
         agenda: sanitizedData.agenda,
         meetingCode: sanitizeInput(meetingCode),
         signatureUrl: signatureUrl,

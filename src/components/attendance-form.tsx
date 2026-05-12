@@ -38,6 +38,7 @@ export function AttendanceForm({ meetingCode = "default" }: AttendanceFormProps)
     defaultValues: {
       nama: "",
       nip: "",
+      jabatan: "",
       agenda: "",
       signature: "",
     },
@@ -140,18 +141,34 @@ export function AttendanceForm({ meetingCode = "default" }: AttendanceFormProps)
           {/* NIP Field */}
           <div className="space-y-2">
             <Label htmlFor="nip" className="text-sm font-semibold text-gray-900">
-              Jabatan / Posisi <span className="text-gray-400 font-normal">(Opsional)</span>
+              NIP <span className="text-gray-400 font-normal">(Opsional)</span>
             </Label>
             <Input
               id="nip"
-              placeholder="Cth: Manager, Supervisor, Staff"
+              placeholder="Cth: 123456789"
               className="bg-white"
               maxLength={50}
               {...register("nip")}
-              error={errors.nip?.message}
             />
             {errors.nip && (
               <p className="text-xs text-red-500 font-medium">{errors.nip.message}</p>
+            )}
+          </div>
+
+          {/* Jabatan Field */}
+          <div className="space-y-2">
+            <Label htmlFor="jabatan" className="text-sm font-semibold text-gray-900">
+              Jabatan / Posisi <span className="text-gray-400 font-normal">(Opsional)</span>
+            </Label>
+            <Input
+              id="jabatan"
+              placeholder="Cth: Manager, Supervisor, Staff"
+              className="bg-white"
+              maxLength={100}
+              {...register("jabatan")}
+            />
+            {errors.jabatan && (
+              <p className="text-xs text-red-500 font-medium">{errors.jabatan.message}</p>
             )}
           </div>
 
