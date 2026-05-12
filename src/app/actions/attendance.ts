@@ -143,16 +143,18 @@ export async function submitAttendance(
     }
 
     // 5. Create AttendanceRecord dengan signature URL (bukan base64)
+    const createData: any = {
+      nama: sanitizedData.nama,
+      nip: sanitizedData.nip,
+      // jabatan: sanitizedData.jabatan, // TODO: Uncomment after migration
+      agenda: sanitizedData.agenda,
+      meetingCode: sanitizeInput(meetingCode),
+      signatureUrl: signatureUrl,
+      dailyLogId: dailyLog.id,
+    };
+    
     const record = await prisma.attendanceRecord.create({
-      data: {
-        nama: sanitizedData.nama,
-        nip: sanitizedData.nip,
-        jabatan: sanitizedData.jabatan,
-        agenda: sanitizedData.agenda,
-        meetingCode: sanitizeInput(meetingCode),
-        signatureUrl: signatureUrl,
-        dailyLogId: dailyLog.id,
-      },
+      data: createData,
     });
 
     logger.info(

@@ -37,7 +37,7 @@ export async function GET(request: Request) {
             id: true,
             nama: true,
             nip: true,
-            jabatan: true,
+            // jabatan: true, // TODO: Uncomment after migration is applied
             agenda: true,
             // PENTING: EXCLUDE signatureUrl untuk reduce payload size
             // Signature di-load on-demand via separate endpoint jika diperlukan
@@ -74,7 +74,7 @@ export async function GET(request: Request) {
           id: record.id,
           nama: record.nama,
           nip: record.nip,
-          jabatan: record.jabatan,
+          // jabatan: record.jabatan, // TODO: Uncomment after migration
           agenda: record.agenda,
           // Jangan include signatureUrl - ini reduce payload drastis!
           createdAt:
