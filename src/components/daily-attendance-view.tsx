@@ -165,32 +165,55 @@ export function DailyAttendanceView({ meetingCode = "default" }: DailyAttendance
         console.log('[DailyAttendanceView] Setting up Supabase Realtime listener...');
         
         // Subscribe ke changes di AttendanceRecord table
+        const channelName = `attendance-${meetingCode}-${Date.now()}`;
         realtimeSubscriptionRef.current = supabaseClientRef.current
-          .channel(`attendance:${meetingCode}`)
+          .channel(channelName, {
+            config: {
+              broadcast: { self: true },
+              presence: { key: meetingCode },
+            },
+          })
           .on(
             'postgres_changes',
             {
               event: 'INSERT',
               schema: 'public',
               table: 'AttendanceRecord',
-              filter: `meetingCode=eq.${meetingCode}`
             },
             (payload) => {
               console.log('[DailyAttendanceView] Realtime INSERT event:', payload);
-              void fetchData(false); // Fetch data immediately on new attendance
+              // Fetch data immediately on new attendance (instant update!)
+              void fetchData(false);
             }
           )
-          .subscribe();
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'AttendanceRecord',
+            },
+            (payload) => {
+              console.log('[DailyAttendanceView] Realtime UPDATE event:', payload);
+              void fetchData(false);
+            }
+          )
+          .subscribe((status) => {
+            console.log(`[DailyAttendanceView] Realtime subscription status: ${status}`);
+          });
           
         console.log('[DailyAttendanceView] Supabase Realtime listener ready');
       } catch (err) {
-        console.log('[DailyAttendanceView] Supabase Realtime setup failed:', err);
+        console.warn('[DailyAttendanceView] Supabase Realtime setup failed:', err);
+        console.log('[DailyAttendanceView] Falling back to polling only');
       }
+    } else {
+      console.log('[DailyAttendanceView] Supabase client not available, using polling only');
     }
 
-    // Polling real-time setiap 3 detik sebagai fallback
+    // Polling real-time setiap 3 detik sebagai fallback (jika Realtime tidak aktif)
     pollingInterval = setInterval(() => {
-      console.log('[DailyAttendanceView] Polling interval triggered');
+      console.log('[DailyAttendanceView] Polling interval triggered (fallback)');
       void fetchData(false);
     }, 3000);
     
